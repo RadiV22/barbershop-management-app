@@ -1,0 +1,276 @@
+import type { Request, Response } from "express";
+import prisma from "../lib/prisma.js";
+import { Prisma } from "../generated/prisma/client.js";
+
+const MAX_INT = 2147483647;
+
+export const createService = async (req: Request, res: Response) => {
+  try {
+    const { name, price, duration } = req.body ?? {};
+
+    if (typeof name !== "string" || name.trim() === "") {
+      return res.status(400).json({
+        message: "Nama layanan wajib diisi",
+      });
+    }
+
+    if (
+      typeof price !== "number" ||
+      !Number.isInteger(price) ||
+      price < 0 ||
+      price > MAX_INT
+    ) {
+      return res.status(400).json({
+        message: `Harga harus berupa angka bulat antara 0 dan ${MAX_INT}`,
+      });
+    }
+
+    if (
+      typeof duration !== "number" ||
+      !Number.isInteger(duration) ||
+      duration <= 0 ||
+      duration > MAX_INT
+    ) {
+      return res.status(400).json({
+        message: `Durasi harus berupa angka bulat antara 1 dan ${MAX_INT}`,
+      });
+    }
+
+    const newService = await prisma.service.create({
+      data: {
+        name: name.trim(),
+        price,
+        duration,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Service berhasil dibuat",
+      data: newService,
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return res.status(409).json({
+        message: "Nama layanan sudah digunakan",
+      });
+    }
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Terjadi kesalahan saat membuat service",
+    });
+  }
+};
+
+export const getAllService = async (_req: Request, res: Response) => {
+  try {
+    const serviceList = await prisma.service.findMany({
+      orderBy: {
+        id: "asc",
+      },
+    });
+
+    return res.status(200).json({
+      message: "Daftar service berhasil diambil",
+      data: serviceList,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Gagal mengambil daftar service",
+    });
+  }
+};
+
+export const getServiceById = async (req: Request, res: Response) => {
+  try {
+    const serviceId = Number(req.params.id);
+
+    if (!Number.isInteger(serviceId) || serviceId <= 0 || serviceId > MAX_INT) {
+      return res.status(400).json({
+        message: `ID layanan harus berupa angka bulat antara 1 dan ${MAX_INT}`,
+      });
+    }
+
+    const service = await prisma.service.findUnique({
+      where: {
+        id: serviceId,
+      },
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        message: "Layanan tidak ditemukan",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Service berhasil diambil",
+      data: service,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Gagal mengambil service",
+    });
+  }
+};
+
+export const updateService = async (req: Request, res: Response) => {
+  try {
+    const serviceId = Number(req.params.id);
+
+    if (!Number.isInteger(serviceId) || serviceId <= 0 || serviceId > MAX_INT) {
+      return res.status(400).json({
+        message: `ID layanan harus berupa angka bulat antara 1 dan ${MAX_INT}`,
+      });
+    }
+
+    const { name, price, duration, isActive } = req.body ?? {};
+
+    const updateData: {
+      name?: string;
+      price?: number;
+      duration?: number;
+      isActive?: boolean;
+    } = {};
+
+    if (name !== undefined) {
+      if (typeof name !== "string" || name.trim() === "") {
+        return res.status(400).json({
+          message: "Nama layanan harus berupa teks dan tidak boleh kosong",
+        });
+      }
+
+      updateData.name = name.trim();
+    }
+
+    if (price !== undefined) {
+      if (
+        typeof price !== "number" ||
+        !Number.isInteger(price) ||
+        price < 0 ||
+        price > MAX_INT
+      ) {
+        return res.status(400).json({
+          message: `Harga harus berupa angka bulat antara 0 dan ${MAX_INT}`,
+        });
+      }
+
+      updateData.price = price;
+    }
+
+    if (duration !== undefined) {
+      if (
+        typeof duration !== "number" ||
+        !Number.isInteger(duration) ||
+        duration <= 0 ||
+        duration > MAX_INT
+      ) {
+        return res.status(400).json({
+          message: `Durasi harus berupa angka bulat antara 1 dan ${MAX_INT}`,
+        });
+      }
+
+      updateData.duration = duration;
+    }
+
+    if (isActive !== undefined) {
+      if (typeof isActive !== "boolean") {
+        return res.status(400).json({
+          message: "isActive harus berupa true atau false",
+        });
+      }
+
+      updateData.isActive = isActive;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        message:
+          "Kirim minimal satu field: name, price, duration, atau isActive",
+      });
+    }
+
+    const updatedService = await prisma.service.update({
+      where: {
+        id: serviceId,
+      },
+      data: updateData,
+    });
+
+    return res.status(200).json({
+      message: "Service berhasil diperbarui",
+      data: updatedService,
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return res.status(409).json({
+          message: "Nama layanan sudah digunakan",
+        });
+      }
+
+      if (error.code === "P2025") {
+        return res.status(404).json({
+          message: "Layanan tidak ditemukan",
+        });
+      }
+    }
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Gagal memperbarui service",
+    });
+  }
+};
+
+export const deleteService = async (req: Request, res: Response) => {
+  try {
+    const serviceId = Number(req.params.id);
+
+    if (!Number.isInteger(serviceId) || serviceId <= 0 || serviceId > MAX_INT) {
+      return res.status(400).json({
+        message: `ID layanan harus berupa angka bulat antara 1 dan ${MAX_INT}`,
+      });
+    }
+
+    await prisma.service.delete({
+      where: {
+        id: serviceId,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Service berhasil dihapus",
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        return res.status(404).json({
+          message: "Layanan tidak ditemukan",
+        });
+      }
+
+      if (error.code === "P2003") {
+        return res.status(409).json({
+          message:
+            "Layanan masih terkait data lain sehingga tidak dapat dihapus",
+        });
+      }
+    }
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Gagal menghapus service",
+    });
+  }
+};

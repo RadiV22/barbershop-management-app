@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Service {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  duration  Int
+  price     Int
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@map("services")
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("customers")
+}
+
+model Kapster {
+  id        Int      @id @default(autoincrement())
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@map("kapsters")
+}
+
+enum ServiceStatus {
+  WAITING
+  IN_SERVICE
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  customerId    Int           @map("customer_id")
+  kapsterId     Int           @map("kapster_id")
+  serviceStatus ServiceStatus @default(WAITING) @map("service_status")
+  paymentStatus PaymentStatus @default(UNPAID) @map("payment_status")
+  notes         String?
+  checkInAt     DateTime      @default(now()) @map("check_in_at")
+  completedAt   DateTime?     @map("completed_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+kapster  Kapster  @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
+  items OrderItem[]
+
+  @@index([customerId])
+  @@index([kapsterId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          Int      @id @default(autoincrement())
+  orderId     Int      @map("order_id")
+  serviceId   Int      @map("service_id")
+  serviceName String   @map("service_name")
+  quantity    Int      @default(1)
+  unitPrice   Int      @map("unit_price")
+  duration    Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, serviceId])
+  @@index([serviceId])
+  @@map("order_items")
+}

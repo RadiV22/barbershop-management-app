@@ -1,0 +1,10 @@
+node_modules/
+dist/
+
+# Konfigurasi lingkungan
+.env
+.env.*
+!.env.example
+
+# Prisma Client hasil generate
+/backend/src/generated/prisma/
