@@ -61,6 +61,28 @@ enum PaymentStatus {
   PAID
 }
 
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  QRIS
+  CARD
+  OTHER
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  orderId        Int           @unique @map("order_id")
+  amount         Int
+  method         PaymentMethod
+  amountReceived Int           @map("amount_received")
+  change         Int           @default(0)
+  paidAt         DateTime      @default(now()) @map("paid_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@map("payments")
+}
+
 model Order {
   id            Int           @id @default(autoincrement())
   customerId    Int           @map("customer_id")
@@ -75,7 +97,8 @@ model Order {
 
 customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
 kapster  Kapster  @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
-  items OrderItem[]
+items   OrderItem[]
+payment Payment?
 
   @@index([customerId])
   @@index([kapsterId])

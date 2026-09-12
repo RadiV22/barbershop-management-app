@@ -221,6 +221,7 @@ export const getOrderById = async (req: Request, res: Response) => {
           },
         },
         items: true,
+        payment: true,
       },
     });
 
@@ -377,18 +378,53 @@ export const deleteOrder = async (req: Request, res: Response) => {
       });
     }
 
-    await prisma.$transaction([
-      prisma.orderItem.deleteMany({
-        where: {
-          orderId: orderId,
-        },
-      }),
-      prisma.order.delete({
+    const result = await prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({
         where: {
           id: orderId,
         },
-      }),
-    ]);
+      });
+
+      if (!order) {
+        return "NOT_FOUND";
+      }
+
+      if (
+        order.serviceStatus !== "WAITING" ||
+        order.paymentStatus !== "UNPAID"
+      ) {
+        return "NOT_ALLOWED";
+      }
+
+      await tx.orderItem.deleteMany({
+        where: {
+          orderId: orderId,
+        },
+      });
+
+      await tx.order.delete({
+        where: {
+          id: orderId,
+          serviceStatus: "WAITING",
+          paymentStatus: "UNPAID",
+        },
+      });
+
+      return "DELETED";
+    });
+
+    if (result === "NOT_FOUND") {
+      return res.status(404).json({
+        message: "Order tidak ditemukan",
+      });
+    }
+
+    if (result === "NOT_ALLOWED") {
+      return res.status(409).json({
+        message:
+          "Hanya order yang masih WAITING dan belum dibayar yang boleh dihapus",
+      });
+    }
 
     return res.status(200).json({
       message: "Order beserta rincian layanan berhasil dihapus",
@@ -396,8 +432,9 @@ export const deleteOrder = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
-        return res.status(404).json({
-          message: "Order tidak ditemukan",
+        return res.status(409).json({
+          message:
+            "Order sudah berubah atau dihapus. Muat ulang data sebelum mencoba lagi.",
         });
       }
 
@@ -412,6 +449,47 @@ export const deleteOrder = async (req: Request, res: Response) => {
 
     return res.status(500).json({
       message: "Gagal menghapus order",
+    });
+  }
+};
+
+export const getOrderHistory = async (req: Request, res: Response) => {
+  try {
+    const orderHistory = await prisma.order.findMany({
+      where: {
+        serviceStatus: "COMPLETED",
+        paymentStatus: "PAID",
+      },
+      orderBy: {
+        completedAt: "desc",
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        kapster: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        items: true,
+        payment: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Riwayat order berhasil diambil",
+      data: orderHistory,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Gagal mengambil riwayat order",
     });
   }
 };
