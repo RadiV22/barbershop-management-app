@@ -154,14 +154,70 @@ export const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllOrder = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
+export const getAllOrder = async (req: Request, res: Response) => {
   try {
+    const { search, serviceStatus, paymentStatus, sortOrder } = req.query;
+
+    if (search !== undefined && typeof search !== "string") {
+      return res.status(400).json({
+        message: "Search harus berupa teks",
+      });
+    }
+
+    if (
+      serviceStatus !== undefined &&
+      serviceStatus !== "WAITING" &&
+      serviceStatus !== "IN_SERVICE" &&
+      serviceStatus !== "COMPLETED"
+    ) {
+      return res.status(400).json({
+        message: "Status layanan harus WAITING, IN_SERVICE, atau COMPLETED",
+      });
+    }
+
+    if (
+      paymentStatus !== undefined &&
+      paymentStatus !== "UNPAID" &&
+      paymentStatus !== "PAID"
+    ) {
+      return res.status(400).json({
+        message: "Status pembayaran harus UNPAID atau PAID",
+      });
+    }
+
+    if (
+      sortOrder !== undefined &&
+      sortOrder !== "asc" &&
+      sortOrder !== "desc"
+    ) {
+      return res.status(400).json({
+        message: "Urutan harus asc atau desc",
+      });
+    }
+
+    const where: Prisma.OrderWhereInput = {};
+
+    if (search?.trim()) {
+      where.customer = {
+        name: {
+          contains: search.trim(),
+          mode: "insensitive",
+        },
+      };
+    }
+
+    if (serviceStatus !== undefined) {
+      where.serviceStatus = serviceStatus;
+    }
+
+    if (paymentStatus !== undefined) {
+      where.paymentStatus = paymentStatus;
+    }
+
     const orderList = await prisma.order.findMany({
+      where: where,
       orderBy: {
-        id: "asc",
+        id: sortOrder ?? "asc",
       },
       include: {
         customer: {
@@ -180,19 +236,18 @@ export const getAllOrder = async (
       },
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Daftar order berhasil diambil",
       data: orderList,
     });
   } catch (error) {
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Gagal mengambil daftar order",
     });
   }
 };
-
 export const getOrderById = async (req: Request, res: Response) => {
   try {
     const orderId = Number(req.params.id);
