@@ -20,3 +20,9 @@ export const registerSchema = z
     message: "Konfirmasi password tidak cocok",
     path: ["confirmPassword"],
   });
+
+export const loginSchema = z.object({
+  email: z.string().trim().email("Email tidak valid").toLowerCase(),
+
+  password: z.string().min(1, "Password wajib diisi"),
+});
