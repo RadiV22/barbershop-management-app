@@ -22,7 +22,11 @@ export const registerSchema = z
   });
 
 export const loginSchema = z.object({
-  email: z.string().trim().email("Email tidak valid").toLowerCase(),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .pipe(z.email({ error: "Email tidak valid" })),
 
   password: z.string().min(1, "Password wajib diisi"),
 });

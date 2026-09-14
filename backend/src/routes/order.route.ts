@@ -5,7 +5,6 @@ import {
   getOrderHistory,
   getOrderById,
   updateOrderStatus,
-  updatePaymentStatus,
   deleteOrder,
 } from "../controllers/order.controller.js";
 import { createPayment } from "../controllers/payment.controller.js";
