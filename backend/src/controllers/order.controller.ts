@@ -1,8 +1,12 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 
-export const createOrder = async (req: Request, res: Response) => {
+export const createOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { customerId, kapsterId, items, notes } = req.body ?? {};
 
@@ -146,15 +150,15 @@ export const createOrder = async (req: Request, res: Response) => {
       }
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal membuat order",
-    });
+    next(error);
   }
 };
 
-export const getAllOrder = async (req: Request, res: Response) => {
+export const getAllOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { search, serviceStatus, paymentStatus, sortOrder } = req.query;
 
@@ -241,14 +245,14 @@ export const getAllOrder = async (req: Request, res: Response) => {
       data: orderList,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil daftar order",
-    });
+    next(error);
   }
 };
-export const getOrderById = async (req: Request, res: Response) => {
+export const getOrderById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const orderId = Number(req.params.id);
 
@@ -290,15 +294,15 @@ export const getOrderById = async (req: Request, res: Response) => {
       data: order,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil order",
-    });
+    next(error);
   }
 };
 
-export const updateOrderStatus = async (req: Request, res: Response) => {
+export const updateOrderStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const orderId = Number(req.params.id);
     const { serviceStatus } = req.body ?? {};
@@ -358,11 +362,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     // Berikutnya: cari order dan periksa perpindahan status.
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal memperbarui status order",
-    });
+    next(error);
   }
 };
 
@@ -423,7 +423,11 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteOrder = async (req: Request, res: Response) => {
+export const deleteOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const orderId = Number(req.params.id);
 
@@ -500,15 +504,15 @@ export const deleteOrder = async (req: Request, res: Response) => {
       }
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal menghapus order",
-    });
+    next(error);
   }
 };
 
-export const getOrderHistory = async (req: Request, res: Response) => {
+export const getOrderHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const orderHistory = await prisma.order.findMany({
       where: {
@@ -541,10 +545,6 @@ export const getOrderHistory = async (req: Request, res: Response) => {
       data: orderHistory,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil riwayat order",
-    });
+    next(error);
   }
 };

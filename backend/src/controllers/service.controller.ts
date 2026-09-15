@@ -1,10 +1,14 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 
 const MAX_INT = 2147483647;
 
-export const createService = async (req: Request, res: Response) => {
+export const createService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { name, price, duration } = req.body ?? {};
 
@@ -57,16 +61,15 @@ export const createService = async (req: Request, res: Response) => {
         message: "Nama layanan sudah digunakan",
       });
     }
-
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Terjadi kesalahan saat membuat service",
-    });
+    next(error);
   }
 };
 
-export const getAllService = async (_req: Request, res: Response) => {
+export const getAllService = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const serviceList = await prisma.service.findMany({
       orderBy: {
@@ -79,15 +82,15 @@ export const getAllService = async (_req: Request, res: Response) => {
       data: serviceList,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil daftar service",
-    });
+    next(error);
   }
 };
 
-export const getServiceById = async (req: Request, res: Response) => {
+export const getServiceById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const serviceId = Number(req.params.id);
 
@@ -114,15 +117,15 @@ export const getServiceById = async (req: Request, res: Response) => {
       data: service,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil service",
-    });
+    next(error);
   }
 };
 
-export const updateService = async (req: Request, res: Response) => {
+export const updateService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const serviceId = Number(req.params.id);
 
@@ -224,15 +227,15 @@ export const updateService = async (req: Request, res: Response) => {
       }
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal memperbarui service",
-    });
+    next(error);
   }
 };
 
-export const deleteService = async (req: Request, res: Response) => {
+export const deleteService = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const serviceId = Number(req.params.id);
 
@@ -267,10 +270,6 @@ export const deleteService = async (req: Request, res: Response) => {
       }
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal menghapus service",
-    });
+    next(error);
   }
 };

@@ -1,8 +1,12 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 
-export const createPayment = async (req: Request, res: Response) => {
+export const createPayment = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const orderId = Number(req.params.id);
     const { method, amountReceived } = req.body ?? {};
@@ -134,10 +138,6 @@ export const createPayment = async (req: Request, res: Response) => {
         });
       }
     }
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mencatat pembayaran",
-    });
+    next(error);
   }
 };

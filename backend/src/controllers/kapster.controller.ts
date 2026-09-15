@@ -1,8 +1,12 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 
-export const createKapster = async (req: Request, res: Response) => {
+export const createKapster = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { name } = req.body ?? {};
 
@@ -23,15 +27,15 @@ export const createKapster = async (req: Request, res: Response) => {
       data: newKapster,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Terjadi kesalahan saat membuat Kapster",
-    });
+    next(error);
   }
 };
 
-export const getAllKapster = async (req: Request, res: Response) => {
+export const getAllKapster = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const kapsterList = await prisma.kapster.findMany({
       orderBy: {
@@ -44,15 +48,15 @@ export const getAllKapster = async (req: Request, res: Response) => {
       data: kapsterList,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil daftar Kapster",
-    });
+    next(error);
   }
 };
 
-export const getKapsterById = async (req: Request, res: Response) => {
+export const getKapsterById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const kapsterId = Number(req.params.id);
 
@@ -79,15 +83,15 @@ export const getKapsterById = async (req: Request, res: Response) => {
       data: kapster,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil kapster",
-    });
+    next(error);
   }
 };
 
-export const updateKapster = async (req: Request, res: Response) => {
+export const updateKapster = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const kapsterId = Number(req.params.id);
 
@@ -142,15 +146,15 @@ export const updateKapster = async (req: Request, res: Response) => {
       data: updatedKapster,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal memperbarui Kapster",
-    });
+    next(error);
   }
 };
 
-export const deleteKapster = async (req: Request, res: Response) => {
+export const deleteKapster = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const kapsterId = Number(req.params.id);
 
@@ -185,10 +189,6 @@ export const deleteKapster = async (req: Request, res: Response) => {
       }
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal menghapus Kapster",
-    });
+    next(error);
   }
 };

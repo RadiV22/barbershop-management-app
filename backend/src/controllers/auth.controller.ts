@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -6,7 +6,11 @@ import { registerSchema } from "../schemas/auth.schema.js";
 import { loginSchema } from "../schemas/auth.schema.js";
 import jwt from "jsonwebtoken";
 
-export const register = async (req: Request, res: Response) => {
+export const register = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const result = registerSchema.safeParse(req.body);
 
@@ -66,15 +70,15 @@ export const register = async (req: Request, res: Response) => {
       });
     }
 
-    console.error("Gagal membuat akun:", error);
-
-    return res.status(500).json({
-      message: "Terjadi kesalahan pada server",
-    });
+    next(error);
   }
 };
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const result = loginSchema.safeParse(req.body);
 
@@ -141,10 +145,6 @@ export const login = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Gagal login:", error);
-
-    return res.status(500).json({
-      message: "Terjadi kesalahan pada server",
-    });
+    next(error);
   }
 };

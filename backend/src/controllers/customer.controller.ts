@@ -1,8 +1,12 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 
-export const createCustomer = async (req: Request, res: Response) => {
+export const createCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { name, phone } = req.body ?? {};
 
@@ -41,15 +45,15 @@ export const createCustomer = async (req: Request, res: Response) => {
         message: "Nomor telepon sudah digunakan",
       });
     }
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Terjadi kesalahan saat membuat customer",
-    });
+    next(error);
   }
 };
 
-export const getAllCustomer = async (req: Request, res: Response) => {
+export const getAllCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const customerList = await prisma.customer.findMany({
       orderBy: {
@@ -62,15 +66,15 @@ export const getAllCustomer = async (req: Request, res: Response) => {
       data: customerList,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil daftar customer",
-    });
+    next(error);
   }
 };
 
-export const getCustomerById = async (req: Request, res: Response) => {
+export const getCustomerById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const customerId = Number(req.params.id);
 
@@ -97,15 +101,15 @@ export const getCustomerById = async (req: Request, res: Response) => {
       data: customer,
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal mengambil customer",
-    });
+    next(error);
   }
 };
 
-export const updateCustomer = async (req: Request, res: Response) => {
+export const updateCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const customerId = Number(req.params.id);
 
@@ -174,16 +178,15 @@ export const updateCustomer = async (req: Request, res: Response) => {
         });
       }
     }
-
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal memperbarui customer",
-    });
+    next(error);
   }
 };
 
-export const deleteCustomer = async (req: Request, res: Response) => {
+export const deleteCustomer = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const customerId = Number(req.params.id);
 
@@ -218,10 +221,6 @@ export const deleteCustomer = async (req: Request, res: Response) => {
       }
     }
 
-    console.error(error);
-
-    return res.status(500).json({
-      message: "Gagal menghapus customer",
-    });
+    next(error);
   }
 };
