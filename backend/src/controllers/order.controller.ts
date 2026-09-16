@@ -28,6 +28,9 @@ export const createOrder = async (
 
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
+      include: {
+        membership: true,
+      },
     });
 
     if (!customer) {
@@ -86,11 +89,27 @@ export const createOrder = async (
       });
     }
 
+    const subtotal = orderItems.reduce((total, item) => {
+      return total + item.quantity * item.unitPrice;
+    }, 0);
+
+    const discountPercent = customer.membership?.isActive
+      ? customer.membership.discountPercent
+      : 0;
+
+    const discount = Math.round((subtotal * discountPercent) / 100);
+
+    const total = subtotal - discount;
+
     const newOrder = await prisma.order.create({
       data: {
         customerId: customerId,
         kapsterId: kapsterId,
         notes: notes?.trim() || null,
+        subtotal: subtotal,
+        discountPercent: discountPercent,
+        discount: discount,
+        total: total,
         items: {
           create: orderItems,
         },

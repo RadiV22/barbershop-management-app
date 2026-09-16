@@ -104,6 +104,10 @@ model Order {
   kapsterId     Int           @map("kapster_id")
   serviceStatus ServiceStatus @default(WAITING) @map("service_status")
   paymentStatus PaymentStatus @default(UNPAID) @map("payment_status")
+ subtotal        Int
+discountPercent Int @default(0) @map("discount_percent")
+discount        Int @default(0)
+total           Int
   notes         String?
   checkInAt     DateTime      @default(now()) @map("check_in_at")
   completedAt   DateTime?     @map("completed_at")

@@ -57,9 +57,7 @@ export const createPayment = async (
       });
     }
 
-    const amount = order.items.reduce((total, item) => {
-      return total + item.quantity * item.unitPrice;
-    }, 0);
+    const amount = order.total;
 
     if (method === "CASH" && amountReceived < amount) {
       return res.status(400).json({
