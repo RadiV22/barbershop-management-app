@@ -33,9 +33,24 @@ model Customer {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  orders Order[]
+  orders     Order[]
+  membership Membership?
 
   @@map("customers")
+}
+
+model Membership {
+  id              Int      @id @default(autoincrement())
+  customerId      Int      @unique @map("customer_id")
+  memberCode      String   @unique @map("member_code")
+  discountPercent Int      @default(10) @map("discount_percent")
+  isActive        Boolean  @default(true) @map("is_active")
+  joinedAt        DateTime @default(now()) @map("joined_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  @@map("memberships")
 }
 
 model Kapster {
@@ -95,10 +110,10 @@ model Order {
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
-customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
-kapster  Kapster  @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
-items   OrderItem[]
-payment Payment?
+  customer Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  kapster  Kapster     @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
+  items    OrderItem[]
+  payment  Payment?
 
   @@index([customerId])
   @@index([kapsterId])
