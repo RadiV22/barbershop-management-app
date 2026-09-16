@@ -1,6 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
+import {
+  createKapsterSchema,
+  updateKapsterSchema,
+} from "../schemas/kapster.schema.js";
 
 export const createKapster = async (
   req: Request,
@@ -8,6 +12,18 @@ export const createKapster = async (
   next: NextFunction,
 ) => {
   try {
+    const result = createKapsterSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data kapster tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     const { name } = req.body ?? {};
 
     if (typeof name !== "string" || name.trim() === "") {
@@ -93,6 +109,18 @@ export const updateKapster = async (
   next: NextFunction,
 ) => {
   try {
+    const result = updateKapsterSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data kapster tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     const kapsterId = Number(req.params.id);
 
     if (!Number.isInteger(kapsterId) || kapsterId <= 0) {
@@ -134,11 +162,21 @@ export const updateKapster = async (
       });
     }
 
+    const data: Prisma.KapsterUpdateInput = {};
+
+    if (name !== undefined) {
+      data.name = name;
+    }
+
+    if (isActive !== undefined) {
+      data.isActive = isActive;
+    }
+
     const updatedKapster = await prisma.kapster.update({
       where: {
         id: kapsterId,
       },
-      data: updateData,
+      data: data,
     });
 
     return res.status(200).json({

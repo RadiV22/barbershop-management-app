@@ -1,6 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
+import {
+  createOrderSchema,
+  updateOrderStatusSchema,
+} from "../schemas/order.schema.js";
 
 export const createOrder = async (
   req: Request,
@@ -8,59 +12,19 @@ export const createOrder = async (
   next: NextFunction,
 ) => {
   try {
-    const { customerId, kapsterId, items, notes } = req.body ?? {};
+    const result = createOrderSchema.safeParse(req.body);
 
-    if (!Number.isInteger(customerId) || customerId <= 0) {
+    if (!result.success) {
       return res.status(400).json({
-        message: "ID Customer harus berupa bilangan bulat positif",
+        message: "Data order tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
       });
     }
 
-    if (!Number.isInteger(kapsterId) || kapsterId <= 0) {
-      return res.status(400).json({
-        message: "ID Kapster harus berupa bilangan bulat positif",
-      });
-    }
-
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        message: "Pilih Minimal Satu Layanan",
-      });
-    }
-
-    for (const item of items) {
-      if (typeof item !== "object" || item == null || Array.isArray(item)) {
-        return res.status(400).json({
-          message: "Setiap item harus berupa object",
-        });
-      }
-
-      if (!Number.isInteger(item.serviceId) || item.serviceId <= 0) {
-        return res.status(400).json({
-          message: "ID Layanan harus berupa bilangan bulat positif",
-        });
-      }
-
-      if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-        return res.status(400).json({
-          message: "Quantity harus berupa bilangan bulat positif",
-        });
-      }
-    }
-
-    const serviceIds: number[] = items.map((item) => item.serviceId);
-
-    if (new Set(serviceIds).size !== serviceIds.length) {
-      return res.status(400).json({
-        message: "Layanan yang sama cukup ditulis sekali, sesuaikan Quantity",
-      });
-    }
-
-    if (notes !== undefined && typeof notes !== "string") {
-      return res.status(400).json({
-        message: "Catatan harus berupa teks",
-      });
-    }
+    const { customerId, kapsterId, items, notes } = result.data;
 
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
@@ -304,22 +268,25 @@ export const updateOrderStatus = async (
   next: NextFunction,
 ) => {
   try {
+    const result = updateOrderStatusSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data status order tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    const { serviceStatus } = result.data;
+
     const orderId = Number(req.params.id);
-    const { serviceStatus } = req.body ?? {};
 
     if (!Number.isInteger(orderId) || orderId <= 0) {
       return res.status(400).json({
         message: "ID order harus berupa bilangan bulat positif",
-      });
-    }
-
-    if (
-      serviceStatus !== "WAITING" &&
-      serviceStatus !== "IN_SERVICE" &&
-      serviceStatus !== "COMPLETED"
-    ) {
-      return res.status(400).json({
-        message: "Status harus WAITING, IN_SERVICE, atau COMPLETED",
       });
     }
 
@@ -359,8 +326,6 @@ export const updateOrderStatus = async (
       message: "Status order berhasil diperbarui",
       data: updatedOrder,
     });
-
-    // Berikutnya: cari order dan periksa perpindahan status.
   } catch (error) {
     next(error);
   }

@@ -1,6 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
+import {
+  createServiceSchema,
+  updateServiceSchema,
+} from "../schemas/service.schema.js";
 
 const MAX_INT = 2147483647;
 
@@ -10,6 +14,18 @@ export const createService = async (
   next: NextFunction,
 ) => {
   try {
+    const result = createServiceSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data layanan tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     const { name, price, duration } = req.body ?? {};
 
     if (typeof name !== "string" || name.trim() === "") {
@@ -127,6 +143,17 @@ export const updateService = async (
   next: NextFunction,
 ) => {
   try {
+    const result = updateServiceSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data layanan tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
     const serviceId = Number(req.params.id);
 
     if (!Number.isInteger(serviceId) || serviceId <= 0 || serviceId > MAX_INT) {
@@ -201,11 +228,29 @@ export const updateService = async (
       });
     }
 
+    const data: Prisma.ServiceUpdateInput = {};
+
+    if (name !== undefined) {
+      data.name = name;
+    }
+
+    if (duration !== undefined) {
+      data.duration = duration;
+    }
+
+    if (price !== undefined) {
+      data.price = price;
+    }
+
+    if (isActive !== undefined) {
+      data.isActive = isActive;
+    }
+
     const updatedService = await prisma.service.update({
       where: {
         id: serviceId,
       },
-      data: updateData,
+      data: data,
     });
 
     return res.status(200).json({

@@ -1,6 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
+import {
+  createCustomerSchema,
+  updateCustomerSchema,
+} from "../schemas/customer.schema.js";
 
 export const createCustomer = async (
   req: Request,
@@ -8,6 +12,18 @@ export const createCustomer = async (
   next: NextFunction,
 ) => {
   try {
+    const result = createCustomerSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data customer tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
     const { name, phone } = req.body ?? {};
 
     if (typeof name !== "string" || name.trim() === "") {
@@ -110,6 +126,17 @@ export const updateCustomer = async (
   res: Response,
   next: NextFunction,
 ) => {
+  const result = updateCustomerSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      message: "Data customer tidak valid",
+      errors: result.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      })),
+    });
+  }
   try {
     const customerId = Number(req.params.id);
 
@@ -152,11 +179,21 @@ export const updateCustomer = async (
       });
     }
 
+    const data: Prisma.CustomerUpdateInput = {};
+
+    if (name !== undefined) {
+      data.name = name;
+    }
+
+    if (phone !== undefined) {
+      data.phone = phone;
+    }
+
     const updatedCustomer = await prisma.customer.update({
       where: {
         id: customerId,
       },
-      data: updateData,
+      data: data,
     });
 
     return res.status(200).json({

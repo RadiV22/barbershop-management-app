@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
+import { createPaymentSchema } from "../schemas/payment.schema.js";
 
 export const createPayment = async (
   req: Request,
@@ -8,32 +9,23 @@ export const createPayment = async (
   next: NextFunction,
 ) => {
   try {
+    const result = createPaymentSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res.status(400).json({
+        message: "Data pembayaran tidak valid",
+        errors: result.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
     const orderId = Number(req.params.id);
     const { method, amountReceived } = req.body ?? {};
 
     if (!Number.isInteger(orderId) || orderId <= 0) {
       return res.status(400).json({
         message: "ID order harus berupa bilangan bulat positif",
-      });
-    }
-
-    if (
-      method !== "CASH" &&
-      method !== "TRANSFER" &&
-      method !== "QRIS" &&
-      method !== "CARD" &&
-      method !== "OTHER"
-    ) {
-      return res.status(400).json({
-        message:
-          "Metode pembayaran harus CASH, TRANSFER, QRIS, CARD, atau OTHER",
-      });
-    }
-
-    if (!Number.isSafeInteger(amountReceived) || amountReceived < 0) {
-      return res.status(400).json({
-        message:
-          "Uang diterima harus berupa bilangan bulat non-negatif yang valid",
       });
     }
 
