@@ -12,6 +12,14 @@ export const createOrder = async (
   next: NextFunction,
 ) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Anda belum terautentikasi",
+      });
+    }
+
+    const userId = req.user.id;
+
     const result = createOrderSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -103,19 +111,34 @@ export const createOrder = async (
 
     const newOrder = await prisma.order.create({
       data: {
-        customerId: customerId,
-        kapsterId: kapsterId,
+        customerId,
+        kapsterId,
+        createdById: userId,
         notes: notes?.trim() || null,
-        subtotal: subtotal,
-        discountPercent: discountPercent,
-        discount: discount,
-        total: total,
+        subtotal,
+        discountPercent,
+        discount,
+        total,
         items: {
           create: orderItems,
+        },
+        statusHistories: {
+          create: {
+            fromStatus: null,
+            toStatus: "WAITING",
+            changedById: userId,
+          },
         },
       },
       include: {
         items: true,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        statusHistories: true,
       },
     });
 
@@ -263,7 +286,33 @@ export const getOrderById = async (
           },
         },
         items: true,
-        payment: true,
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        payment: {
+          include: {
+            receivedBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        statusHistories: {
+          orderBy: [{ changedAt: "asc" }, { id: "asc" }],
+          include: {
+            changedBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -287,6 +336,14 @@ export const updateOrderStatus = async (
   next: NextFunction,
 ) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Anda belum terautentikasi",
+      });
+    }
+
+    const userId = req.user.id;
+
     const result = updateOrderStatusSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -331,15 +388,43 @@ export const updateOrderStatus = async (
       });
     }
 
-    const updatedOrder = await prisma.order.update({
-      where: {
-        id: orderId,
-      },
-      data: {
-        serviceStatus: serviceStatus,
-        completedAt: serviceStatus === "COMPLETED" ? new Date() : null,
-      },
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      const result = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          serviceStatus: order.serviceStatus,
+        },
+        data: {
+          serviceStatus,
+          completedAt: serviceStatus === "COMPLETED" ? new Date() : null,
+        },
+      });
+
+      if (result.count === 0) {
+        return null;
+      }
+
+      await tx.orderStatusHistory.create({
+        data: {
+          orderId,
+          fromStatus: order.serviceStatus,
+          toStatus: serviceStatus,
+          changedById: userId,
+        },
+      });
+
+      return tx.order.findUniqueOrThrow({
+        where: {
+          id: orderId,
+        },
+      });
     });
+
+    if (!updatedOrder) {
+      return res.status(409).json({
+        message: "Order sudah berubah. Muat ulang data lalu coba kembali",
+      });
+    }
 
     return res.status(200).json({
       message: "Status order berhasil diperbarui",
@@ -439,6 +524,12 @@ export const deleteOrder = async (
         return "NOT_ALLOWED";
       }
 
+      await tx.orderStatusHistory.deleteMany({
+        where: {
+          orderId: orderId,
+        },
+      });
+
       await tx.orderItem.deleteMany({
         where: {
           orderId: orderId,
@@ -470,7 +561,8 @@ export const deleteOrder = async (
     }
 
     return res.status(200).json({
-      message: "Order beserta rincian layanan berhasil dihapus",
+      message:
+        "Order beserta rincian layanan dan riwayat status berhasil dihapus",
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

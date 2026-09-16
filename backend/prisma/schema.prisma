@@ -93,32 +93,41 @@ model Payment {
   change         Int           @default(0)
   paidAt         DateTime      @default(now()) @map("paid_at")
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  order        Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  receivedById Int?  @map("received_by_id")
+  receivedBy   User? @relation("PaymentReceiver", fields: [receivedById], references: [id], onDelete: Restrict)
 
+  @@index([receivedById])
   @@map("payments")
 }
 
 model Order {
-  id            Int           @id @default(autoincrement())
-  customerId    Int           @map("customer_id")
-  kapsterId     Int           @map("kapster_id")
-  serviceStatus ServiceStatus @default(WAITING) @map("service_status")
-  paymentStatus PaymentStatus @default(UNPAID) @map("payment_status")
- subtotal        Int
-discountPercent Int @default(0) @map("discount_percent")
-discount        Int @default(0)
-total           Int
-  notes         String?
-  checkInAt     DateTime      @default(now()) @map("check_in_at")
-  completedAt   DateTime?     @map("completed_at")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+  id              Int           @id @default(autoincrement())
+  customerId      Int           @map("customer_id")
+  kapsterId       Int           @map("kapster_id")
+  serviceStatus   ServiceStatus @default(WAITING) @map("service_status")
+  paymentStatus   PaymentStatus @default(UNPAID) @map("payment_status")
+  subtotal        Int
+  discountPercent Int           @default(0) @map("discount_percent")
+  discount        Int           @default(0)
+  total           Int
+  notes           String?
+  checkInAt       DateTime      @default(now()) @map("check_in_at")
+  completedAt     DateTime?     @map("completed_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
 
   customer Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
   kapster  Kapster     @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
   items    OrderItem[]
   payment  Payment?
 
+  createdById Int?  @map("created_by_id")
+  createdBy   User? @relation("OrderCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  statusHistories OrderStatusHistory[]
+
+  @@index([createdById])
   @@index([customerId])
   @@index([kapsterId])
   @@map("orders")
@@ -157,5 +166,25 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  createdOrders        Order[]              @relation("OrderCreator")
+  orderStatusHistories OrderStatusHistory[] @relation("OrderStatusChanger")
+  receivedPayments     Payment[]            @relation("PaymentReceiver")
+
   @@map("users")
+}
+
+model OrderStatusHistory {
+  id          Int            @id @default(autoincrement())
+  orderId     Int            @map("order_id")
+  fromStatus  ServiceStatus? @map("from_status")
+  toStatus    ServiceStatus  @map("to_status")
+  changedById Int            @map("changed_by_id")
+  changedAt   DateTime       @default(now()) @map("changed_at")
+
+  order     Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  changedBy User  @relation("OrderStatusChanger", fields: [changedById], references: [id], onDelete: Restrict)
+
+  @@index([orderId, changedAt])
+  @@index([changedById])
+  @@map("order_status_histories")
 }

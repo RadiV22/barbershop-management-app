@@ -9,6 +9,14 @@ export const createPayment = async (
   next: NextFunction,
 ) => {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Anda belum terautentikasi",
+      });
+    }
+
+    const userId = req.user.id;
+
     const result = createPaymentSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -98,6 +106,15 @@ export const createPayment = async (
           method: method,
           amountReceived: amountReceived,
           change: change,
+          receivedById: userId,
+        },
+        include: {
+          receivedBy: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
 
