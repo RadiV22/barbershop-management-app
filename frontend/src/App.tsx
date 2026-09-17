@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ServicePage from "./pages/ServicePage";
 import CustomerPage from "./pages/CustomerPage";
+import KapsterPage from "./pages/KapsterPage";
 
 function App() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/services" element={<ServicePage />} />
           <Route path="/customer" element={<CustomerPage />} />
+          <Route path="/kapster" element={<KapsterPage />} />
         </Route>
       </Route>
 
