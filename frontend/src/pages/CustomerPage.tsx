@@ -1,12 +1,28 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import api from "../lib/axios";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
+
+interface Membership {
+  id: number;
+  customerId: number;
+  memberCode: string;
+  discountPercent: number;
+  isActive: boolean;
+  joinedAt: string;
+  updatedAt: string;
+}
+
+interface MembershipResponse {
+  message: string;
+  data: Membership;
+}
 
 interface Customer {
   id: number;
   name: string;
   phone: string | null;
+  membership: Membership | null;
 }
 
 interface CustomerListResponse {
@@ -16,9 +32,10 @@ interface CustomerListResponse {
 
 interface CustomerResponse {
   message: string;
-  data: Customer;
+  data: Omit<Customer, "membership"> & {
+    membership?: Membership | null;
+  };
 }
-
 export default function CustomerPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +46,10 @@ export default function CustomerPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [membershipCustomerId, setMembershipCustomerId] = useState<
+    number | null
+  >(null);
+  const [membershipError, setMembershipError] = useState("");
   const [editingCustomerId, setEditingCustomerId] = useState<number | null>(
     null,
   );
@@ -92,7 +113,7 @@ export default function CustomerPage() {
     setShowForm(true);
   }
 
-  async function handleSaveCustomer(event: FormEvent<HTMLFormElement>) {
+  async function handleSaveCustomer(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (isSaving) return;
@@ -123,7 +144,9 @@ export default function CustomerPage() {
 
         setCustomers((previous) =>
           previous.map((customer) =>
-            customer.id === updatedCustomer.id ? updatedCustomer : customer,
+            customer.id === updatedCustomer.id
+              ? { ...customer, ...updatedCustomer }
+              : customer,
           ),
         );
 
@@ -131,7 +154,13 @@ export default function CustomerPage() {
       } else {
         const response = await api.post<CustomerResponse>("/customer", payload);
 
-        setCustomers((previous) => [...previous, response.data.data]);
+        setCustomers((previous) => [
+          ...previous,
+          {
+            ...response.data.data,
+            membership: response.data.data.membership ?? null,
+          },
+        ]);
 
         setSuccessMessage("Customer berhasil ditambahkan.");
       }
@@ -194,6 +223,62 @@ export default function CustomerPage() {
     }
   }
 
+  async function handleToggleMembership(customer: Customer) {
+    if (
+      isSaving ||
+      showForm ||
+      deletingCustomerId !== null ||
+      membershipCustomerId !== null
+    ) {
+      return;
+    }
+
+    setMembershipError("");
+    setDeleteError("");
+    setSuccessMessage("");
+    setMembershipCustomerId(customer.id);
+
+    try {
+      const response = customer.membership
+        ? await api.patch<MembershipResponse>(
+            `/customer/${customer.id}/membership`,
+            {
+              isActive: !customer.membership.isActive,
+            },
+          )
+        : await api.post<MembershipResponse>(
+            `/customer/${customer.id}/membership`,
+          );
+
+      const updatedMembership = response.data.data;
+
+      setCustomers((previous) =>
+        previous.map((item) =>
+          item.id === customer.id
+            ? { ...item, membership: updatedMembership }
+            : item,
+        ),
+      );
+
+      setSuccessMessage(
+        updatedMembership.isActive
+          ? `Membership ${customer.name} berhasil diaktifkan.`
+          : `Membership ${customer.name} berhasil dinonaktifkan.`,
+      );
+    } catch (error) {
+      if (axios.isAxiosError<{ message?: string }>(error)) {
+        setMembershipError(
+          error.response?.data?.message ??
+            "Tidak dapat memperbarui membership. Pastikan backend berjalan.",
+        );
+      } else {
+        setMembershipError("Terjadi kesalahan saat memperbarui membership.");
+      }
+    } finally {
+      setMembershipCustomerId(null);
+    }
+  }
+
   return (
     <div>
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -220,6 +305,12 @@ export default function CustomerPage() {
           </button>
         )}
       </header>
+
+      {membershipError && (
+        <p role="alert" className="mt-6 rounded-lg bg-red-50 p-4 text-red-700">
+          {membershipError}
+        </p>
+      )}
 
       {deleteError && (
         <p role="alert" className="mt-6 rounded-lg bg-red-50 p-4 text-red-700">
@@ -349,6 +440,9 @@ export default function CustomerPage() {
                       Nomor telepon
                     </th>
                     <th scope="col" className="px-6 py-4">
+                      Membership
+                    </th>
+                    <th scope="col" className="px-6 py-4">
                       Aksi
                     </th>
                   </tr>
@@ -362,10 +456,62 @@ export default function CustomerPage() {
                         {customer.phone || "—"}
                       </td>
                       <td className="px-6 py-4">
+                        {customer.membership ? (
+                          <div className="space-y-2">
+                            <span
+                              className={`inline-block whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${
+                                customer.membership.isActive
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {customer.membership.isActive
+                                ? "Aktif"
+                                : "Tidak aktif"}
+                            </span>
+
+                            <p className="max-w-64 break-all text-xs text-gray-500">
+                              {customer.membership.memberCode}
+                            </p>
+
+                            <p className="text-sm text-gray-600">
+                              Diskon: {customer.membership.discountPercent}%
+                              {!customer.membership.isActive &&
+                                " (tidak berlaku saat nonaktif)"}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">
+                            Belum menjadi member
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          disabled={
+                            showForm ||
+                            isSaving ||
+                            deletingCustomerId !== null ||
+                            membershipCustomerId !== null
+                          }
+                          onClick={() => handleToggleMembership(customer)}
+                          className="mt-3 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {membershipCustomerId === customer.id
+                            ? "Memproses..."
+                            : customer.membership?.isActive
+                              ? "Nonaktifkan membership"
+                              : "Aktifkan membership"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            disabled={isSaving || deletingCustomerId !== null}
+                            disabled={
+                              isSaving ||
+                              deletingCustomerId !== null ||
+                              membershipCustomerId !== null
+                            }
                             onClick={() => {
                               setDeleteError("");
                               handleEditCustomer(customer);

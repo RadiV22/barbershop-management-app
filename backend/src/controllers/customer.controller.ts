@@ -75,6 +75,9 @@ export const getAllCustomer = async (
       orderBy: {
         id: "asc",
       },
+      include: {
+        membership: true,
+      },
     });
 
     return res.status(200).json({
