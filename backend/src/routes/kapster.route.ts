@@ -7,12 +7,12 @@ import {
   deleteKapster,
 } from "../controllers/kapster.controller.js";
 
-const customerRouter = Router();
+const kapsterRouter = Router();
 
-customerRouter.post("/", createKapster);
-customerRouter.get("/", getAllKapster);
-customerRouter.get("/:id", getKapsterById);
-customerRouter.put("/:id", updateKapster);
-customerRouter.delete("/:id", deleteKapster);
+kapsterRouter.post("/", createKapster);
+kapsterRouter.get("/", getAllKapster);
+kapsterRouter.get("/:id", getKapsterById);
+kapsterRouter.put("/:id", updateKapster);
+kapsterRouter.delete("/:id", deleteKapster);
 
-export default customerRouter;
+export default kapsterRouter;
