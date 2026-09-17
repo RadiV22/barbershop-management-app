@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import api from "../lib/axios";
-import { useAuth } from "../hooks/useAuth";
 
 interface DashboardSummary {
   date: string;
@@ -18,8 +17,6 @@ interface DashboardResponse {
 }
 
 function DashboardPage() {
-  const { user, logout } = useAuth();
-
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -68,25 +65,12 @@ function DashboardPage() {
     }).format(value);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6 text-gray-900">
+    <div className="min-h-screen bg-gray-100 p-6 text-gray-900">
       <div className="mx-auto max-w-6xl">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            <p className="mt-2 text-gray-600">
-              Selamat datang, {user?.name} ({user?.role})
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-          >
-            Logout
-          </button>
+        <header>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="mt-1 text-gray-600">Ringkasan aktivitas barbershop.</p>
         </header>
-
         {isLoading && (
           <p role="status" className="mt-8">
             Memuat ringkasan...
@@ -147,7 +131,7 @@ function DashboardPage() {
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
