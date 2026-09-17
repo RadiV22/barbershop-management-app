@@ -590,14 +590,86 @@ export const getOrderHistory = async (
   next: NextFunction,
 ) => {
   try {
+    const { search, startDate, endDate } = req.query;
+
+    if (search !== undefined && typeof search !== "string") {
+      return res.status(400).json({
+        message: "Search harus berupa teks",
+      });
+    }
+
+    // Validasi tanggal kalender, lalu konversi awal hari WIB ke UTC.
+    const parseDateWib = (value: unknown): Date | null => {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        return null;
+      }
+
+      const date = new Date(`${value}T00:00:00.000Z`);
+
+      if (
+        Number.isNaN(date.getTime()) ||
+        date.toISOString().slice(0, 10) !== value
+      ) {
+        return null;
+      }
+
+      return new Date(date.getTime() - 7 * 60 * 60 * 1000);
+    };
+
+    const start = startDate !== undefined ? parseDateWib(startDate) : null;
+
+    const end = endDate !== undefined ? parseDateWib(endDate) : null;
+
+    if (startDate !== undefined && !start) {
+      return res.status(400).json({
+        message: "startDate harus tanggal valid dengan format YYYY-MM-DD",
+      });
+    }
+
+    if (endDate !== undefined && !end) {
+      return res.status(400).json({
+        message: "endDate harus tanggal valid dengan format YYYY-MM-DD",
+      });
+    }
+
+    if (start && end && start.getTime() > end.getTime()) {
+      return res.status(400).json({
+        message: "startDate tidak boleh melewati endDate",
+      });
+    }
+
+    const where: Prisma.OrderWhereInput = {
+      serviceStatus: "COMPLETED",
+      paymentStatus: "PAID",
+    };
+
+    if (search?.trim()) {
+      where.customer = {
+        name: {
+          contains: search.trim(),
+          mode: "insensitive",
+        },
+      };
+    }
+
+    if (start || end) {
+      const completedAt: Prisma.DateTimeNullableFilter = {};
+
+      if (start) {
+        completedAt.gte = start;
+      }
+
+      if (end) {
+        // Batas akhir: sebelum pukul 00.00 WIB hari berikutnya.
+        completedAt.lt = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+      }
+
+      where.completedAt = completedAt;
+    }
+
     const orderHistory = await prisma.order.findMany({
-      where: {
-        serviceStatus: "COMPLETED",
-        paymentStatus: "PAID",
-      },
-      orderBy: {
-        completedAt: "desc",
-      },
+      where,
+      orderBy: [{ completedAt: "desc" }, { id: "desc" }],
       include: {
         customer: {
           select: {
