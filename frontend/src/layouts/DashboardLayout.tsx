@@ -38,6 +38,18 @@ export default function DashboardLayout() {
           >
             Layanan
           </NavLink>
+          <NavLink
+            to="/customer"
+            className={({ isActive }) =>
+              `block rounded-lg px-4 py-3 transition-colors ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`
+            }
+          >
+            Customer
+          </NavLink>
         </nav>
 
         <div className="mt-8 border-t border-gray-700 pt-6 lg:mt-auto">
