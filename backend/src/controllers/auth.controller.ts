@@ -148,3 +148,23 @@ export const login = async (
     next(error);
   }
 };
+
+export const getMe = (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({
+      message: "Anda belum terautentikasi",
+    });
+  }
+
+  const { id, name, email, role } = req.user;
+
+  return res.status(200).json({
+    message: "Data akun berhasil diambil",
+    data: {
+      id,
+      name,
+      email,
+      role,
+    },
+  });
+};
