@@ -50,33 +50,47 @@ export default function DashboardLayout() {
           >
             Customer
           </NavLink>
+
+          <NavLink
+            to="/kapster"
+            className={({ isActive }) =>
+              `block rounded-lg px-4 py-3 transition-colors ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`
+            }
+          >
+            kapster
+          </NavLink>
+
+          <NavLink
+            to="/order"
+            end
+            className={({ isActive }) =>
+              `block rounded-lg px-4 py-3 transition-colors ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`
+            }
+          >
+            order
+          </NavLink>
+
+          <NavLink
+            to="/order/history"
+            className={({ isActive }) =>
+              `block rounded-lg px-4 py-3 transition-colors ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`
+            }
+          >
+            Riwayat
+          </NavLink>
         </nav>
-
-        <NavLink
-          to="/kapster"
-          className={({ isActive }) =>
-            `block rounded-lg px-4 py-3 transition-colors ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-300 hover:bg-gray-800 hover:text-white"
-            }`
-          }
-        >
-          kapster
-        </NavLink>
-
-        <NavLink
-          to="/order"
-          className={({ isActive }) =>
-            `block rounded-lg px-4 py-3 transition-colors ${
-              isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-300 hover:bg-gray-800 hover:text-white"
-            }`
-          }
-        >
-          order
-        </NavLink>
 
         <div className="mt-8 border-t border-gray-700 pt-6 lg:mt-auto">
           <p className="font-medium">{user?.name}</p>
