@@ -9,6 +9,7 @@ import CustomerPage from "./pages/CustomerPage";
 import KapsterPage from "./pages/KapsterPage";
 import OrderPage from "./pages/OrderPage";
 import CreateOrderPage from "./pages/CreateOrderPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 
 function App() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ function App() {
           <Route path="/kapster" element={<KapsterPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/create" element={<CreateOrderPage />} />
+          <Route path="/order/:id" element={<OrderDetailPage />} />
         </Route>
       </Route>
 
