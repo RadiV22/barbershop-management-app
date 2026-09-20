@@ -17,30 +17,44 @@ export const activateMembership = async (
       });
     }
 
-    const customer = await prisma.customer.findUnique({
-      where: {
-        id: customerId,
-      },
-    });
+    const membership = await prisma.$transaction(
+      async (tx) => {
+        const customers = await tx.$queryRaw<{ id: number }[]>`
+      SELECT "id"
+      FROM "customers"
+      WHERE "id" = ${customerId}
+        AND "deleted_at" IS NULL
+      FOR UPDATE
+    `;
 
-    if (!customer) {
+        if (customers.length === 0) {
+          return null;
+        }
+
+        return tx.membership.upsert({
+          where: {
+            customerId,
+          },
+          create: {
+            customerId,
+            memberCode: `MBR-${randomUUID()}`,
+            isActive: true,
+          },
+          update: {
+            isActive: true,
+          },
+        });
+      },
+      {
+        isolationLevel: "ReadCommitted",
+      },
+    );
+
+    if (!membership) {
       return res.status(404).json({
-        message: "Customer tidak ditemukan",
+        message: "Customer tidak ditemukan atau sudah dihapus",
       });
     }
-
-    const membership = await prisma.membership.upsert({
-      where: {
-        customerId: customerId,
-      },
-      create: {
-        customerId: customerId,
-        memberCode: `MBR-${randomUUID()}`,
-      },
-      update: {
-        isActive: true,
-      },
-    });
 
     return res.status(200).json({
       message: "Membership aktif",
@@ -79,26 +93,55 @@ export const updateMembership = async (
 
     const { isActive } = result.data;
 
-    const membership = await prisma.membership.findUnique({
-      where: {
-        customerId: customerId,
-      },
-    });
+    const updatedMembership = await prisma.$transaction(
+      async (tx) => {
+        const customers = await tx.$queryRaw<{ id: number }[]>`
+      SELECT "id"
+      FROM "customers"
+      WHERE "id" = ${customerId}
+        AND "deleted_at" IS NULL
+      FOR UPDATE
+    `;
 
-    if (!membership) {
+        if (customers.length === 0) {
+          return "CUSTOMER_NOT_FOUND";
+        }
+
+        const membership = await tx.membership.findUnique({
+          where: {
+            customerId,
+          },
+        });
+
+        if (!membership) {
+          return "MEMBERSHIP_NOT_FOUND";
+        }
+
+        return tx.membership.update({
+          where: {
+            customerId,
+          },
+          data: {
+            isActive,
+          },
+        });
+      },
+      {
+        isolationLevel: "ReadCommitted",
+      },
+    );
+
+    if (updatedMembership === "CUSTOMER_NOT_FOUND") {
+      return res.status(404).json({
+        message: "Customer tidak ditemukan atau sudah dihapus",
+      });
+    }
+
+    if (updatedMembership === "MEMBERSHIP_NOT_FOUND") {
       return res.status(404).json({
         message: "Membership customer tidak ditemukan",
       });
     }
-
-    const updatedMembership = await prisma.membership.update({
-      where: {
-        customerId: customerId,
-      },
-      data: {
-        isActive: isActive,
-      },
-    });
 
     return res.status(200).json({
       message: "Status membership berhasil diperbarui",

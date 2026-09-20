@@ -109,38 +109,64 @@ export const createOrder = async (
 
     const total = subtotal - discount;
 
-    const newOrder = await prisma.order.create({
-      data: {
-        customerId,
-        kapsterId,
-        createdById: userId,
-        notes: notes?.trim() || null,
-        subtotal,
-        discountPercent,
-        discount,
-        total,
-        items: {
-          create: orderItems,
-        },
-        statusHistories: {
-          create: {
-            fromStatus: null,
-            toStatus: "WAITING",
-            changedById: userId,
+    const newOrder = await prisma.$transaction(
+      async (tx) => {
+        // Gunakan kunci yang sama dengan deleteCustomer.
+        const availableCustomers = await tx.$queryRaw<{ id: number }[]>`
+      SELECT "id"
+      FROM "customers"
+      WHERE "id" = ${customerId}
+        AND "deleted_at" IS NULL
+      FOR UPDATE
+    `;
+
+        if (availableCustomers.length === 0) {
+          return null;
+        }
+
+        return tx.order.create({
+          data: {
+            customerId,
+            kapsterId,
+            createdById: userId,
+            notes: notes?.trim() || null,
+            subtotal,
+            discountPercent,
+            discount,
+            total,
+            items: {
+              create: orderItems,
+            },
+            statusHistories: {
+              create: {
+                fromStatus: null,
+                toStatus: "WAITING",
+                changedById: userId,
+              },
+            },
           },
-        },
-      },
-      include: {
-        items: true,
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
+          include: {
+            items: true,
+            createdBy: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            statusHistories: true,
           },
-        },
-        statusHistories: true,
+        });
       },
-    });
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      },
+    );
+
+    if (!newOrder) {
+      return res.status(404).json({
+        message: "Customer sudah dihapus. Pilih customer lain.",
+      });
+    }
 
     return res.status(201).json({
       message: "Order berhasil dibuat",

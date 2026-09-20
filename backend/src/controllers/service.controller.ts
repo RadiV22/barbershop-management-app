@@ -290,29 +290,78 @@ export const deleteService = async (
       });
     }
 
-    await prisma.service.delete({
-      where: {
-        id: serviceId,
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // Kunci layanan selama pemeriksaan dan penghapusan.
+        const services = await tx.$queryRaw<{ id: number }[]>`
+          SELECT "id"
+          FROM "services"
+          WHERE "id" = ${serviceId}
+          FOR UPDATE
+        `;
+
+        if (services.length === 0) {
+          return "NOT_FOUND";
+        }
+
+        // Cari satu order terkait yang belum selesai atau belum lunas.
+        const unfinishedItem = await tx.orderItem.findFirst({
+          where: {
+            serviceId,
+            order: {
+              OR: [
+                { serviceStatus: { not: "COMPLETED" } },
+                { paymentStatus: { not: "PAID" } },
+              ],
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (unfinishedItem) {
+          return "NOT_ALLOWED";
+        }
+
+        await tx.service.delete({
+          where: {
+            id: serviceId,
+          },
+        });
+
+        return "DELETED";
       },
-    });
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      },
+    );
+
+    if (result === "NOT_FOUND") {
+      return res.status(404).json({
+        message: "Layanan tidak ditemukan",
+      });
+    }
+
+    if (result === "NOT_ALLOWED") {
+      return res.status(409).json({
+        message:
+          "Layanan masih digunakan oleh order yang belum selesai atau belum lunas.",
+      });
+    }
 
     return res.status(200).json({
-      message: "Service berhasil dihapus",
+      message: "Layanan berhasil dihapus. Riwayat order tetap tersimpan.",
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return res.status(404).json({
-          message: "Layanan tidak ditemukan",
-        });
-      }
-
-      if (error.code === "P2003") {
-        return res.status(409).json({
-          message:
-            "Layanan masih terkait data lain sehingga tidak dapat dihapus",
-        });
-      }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
+    ) {
+      return res.status(409).json({
+        message:
+          "Terjadi perubahan data bersamaan. Muat ulang dan coba kembali.",
+      });
     }
 
     next(error);

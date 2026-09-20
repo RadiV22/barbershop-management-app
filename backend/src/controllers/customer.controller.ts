@@ -72,6 +72,9 @@ export const getAllCustomer = async (
 ) => {
   try {
     const customerList = await prisma.customer.findMany({
+      where: {
+        deletedAt: null,
+      },
       orderBy: {
         id: "asc",
       },
@@ -106,6 +109,7 @@ export const getCustomerById = async (
     const customer = await prisma.customer.findUnique({
       where: {
         id: customerId,
+        deletedAt: null,
       },
     });
 
@@ -149,7 +153,7 @@ export const updateCustomer = async (
       });
     }
 
-    const { name, phone } = req.body ?? {};
+    const { name, phone } = result.data;
 
     const updateData: {
       name?: string;
@@ -182,21 +186,12 @@ export const updateCustomer = async (
       });
     }
 
-    const data: Prisma.CustomerUpdateInput = {};
-
-    if (name !== undefined) {
-      data.name = name;
-    }
-
-    if (phone !== undefined) {
-      data.phone = phone;
-    }
-
     const updatedCustomer = await prisma.customer.update({
       where: {
         id: customerId,
+        deletedAt: null,
       },
-      data: data,
+      data: updateData,
     });
 
     return res.status(200).json({
@@ -230,35 +225,90 @@ export const deleteCustomer = async (
   try {
     const customerId = Number(req.params.id);
 
-    if (!Number.isInteger(customerId) || customerId <= 0) {
+    if (
+      !Number.isInteger(customerId) ||
+      customerId <= 0 ||
+      customerId > 2147483647
+    ) {
       return res.status(400).json({
-        message: "ID customer harus berupa angka bulat",
+        message: "ID customer harus berupa bilangan bulat positif yang valid",
       });
     }
 
-    await prisma.customer.delete({
-      where: {
-        id: customerId,
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // Kunci customer selama pemeriksaan dan penghapusan.
+        const customers = await tx.$queryRaw<{ id: number }[]>`
+          SELECT "id"
+          FROM "customers"
+          WHERE "id" = ${customerId}
+            AND "deleted_at" IS NULL
+          FOR UPDATE
+        `;
+
+        if (customers.length === 0) {
+          return "NOT_FOUND";
+        }
+
+        const unfinishedOrder = await tx.order.findFirst({
+          where: {
+            customerId,
+            OR: [
+              { serviceStatus: { not: "COMPLETED" } },
+              { paymentStatus: { not: "PAID" } },
+            ],
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (unfinishedOrder) {
+          return "NOT_ALLOWED";
+        }
+
+        // Simpan tanggal penghapusan, bukan menghapus baris database.
+        await tx.customer.update({
+          where: {
+            id: customerId,
+          },
+          data: {
+            deletedAt: new Date(),
+          },
+        });
+
+        return "DELETED";
       },
-    });
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      },
+    );
+
+    if (result === "NOT_FOUND") {
+      return res.status(404).json({
+        message: "Customer tidak ditemukan atau sudah dihapus",
+      });
+    }
+
+    if (result === "NOT_ALLOWED") {
+      return res.status(409).json({
+        message:
+          "Customer masih memiliki order yang belum selesai atau belum lunas.",
+      });
+    }
 
     return res.status(200).json({
-      message: "Customer berhasil dihapus",
+      message: "Customer berhasil dihapus. Riwayat order tetap tersimpan.",
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return res.status(404).json({
-          message: "Customer tidak ditemukan",
-        });
-      }
-
-      if (error.code === "P2003") {
-        return res.status(409).json({
-          message:
-            "Customer masih terkait data lain sehingga tidak dapat dihapus",
-        });
-      }
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
+    ) {
+      return res.status(409).json({
+        message:
+          "Terjadi perubahan data bersamaan. Muat ulang dan coba kembali.",
+      });
     }
 
     next(error);

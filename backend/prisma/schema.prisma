@@ -32,6 +32,7 @@ model Customer {
   phone     String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   orders     Order[]
   membership Membership?
@@ -136,7 +137,7 @@ model Order {
 model OrderItem {
   id          Int      @id @default(autoincrement())
   orderId     Int      @map("order_id")
-  serviceId   Int      @map("service_id")
+  serviceId   Int?     @map("service_id")
   serviceName String   @map("service_name")
   quantity    Int      @default(1)
   unitPrice   Int      @map("unit_price")
@@ -144,8 +145,8 @@ model OrderItem {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  service Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
   @@unique([orderId, serviceId])
   @@index([serviceId])
