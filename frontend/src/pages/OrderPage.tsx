@@ -63,7 +63,9 @@ function formatRupiah(value: number) {
 }
 
 function formatDate(value: string) {
-  return new Date(value).toLocaleString("id-ID");
+  return new Date(value).toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+  });
 }
 
 function getServiceStatusLabel(status: ServiceStatus) {
@@ -89,8 +91,8 @@ export default function OrderPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [deleteError, setDeleteError] = useState("");
   const [deletingOrderId, setDeletingOrderId] = useState<number | null>(null);
-
   const [search, setSearch] = useState("");
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | "">("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "">("");
@@ -101,6 +103,8 @@ export default function OrderPage() {
 
     async function loadOrders() {
       try {
+        setIsLoading(true);
+        setErrorMessage("");
         const response = await api.get<OrderListResponse>("/order", {
           params: {
             ...(search.trim() ? { search: search.trim() } : {}),
@@ -162,7 +166,7 @@ export default function OrderPage() {
     }
 
     setDeletingOrderId(order.id);
-    setErrorMessage("");
+    setDeleteError("");
 
     try {
       await api.delete(`/order/${order.id}`);
@@ -170,11 +174,11 @@ export default function OrderPage() {
       setOrders((previous) => previous.filter((item) => item.id !== order.id));
     } catch (error) {
       if (axios.isAxiosError<ErrorResponse>(error)) {
-        setErrorMessage(
+        setDeleteError(
           error.response?.data?.message ?? "Tidak dapat menghapus order.",
         );
       } else {
-        setErrorMessage("Terjadi kesalahan saat menghapus order.");
+        setDeleteError("Terjadi kesalahan saat menghapus order.");
       }
     } finally {
       setDeletingOrderId(null);
@@ -207,6 +211,12 @@ export default function OrderPage() {
           Buat order
         </button>
       </header>
+
+      {deleteError && (
+        <p role="alert" className="mt-6 rounded-lg bg-red-50 p-4 text-red-700">
+          {deleteError}
+        </p>
+      )}
 
       <section className="mt-6 rounded-xl bg-white p-6 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

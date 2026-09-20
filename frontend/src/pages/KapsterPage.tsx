@@ -253,7 +253,10 @@ export default function KapsterPage() {
           <button
             type="button"
             disabled={
-              isLoading || Boolean(errorMessage) || deletingKapsterId !== null
+              isLoading ||
+              Boolean(errorMessage) ||
+              deletingKapsterId !== null ||
+              updatingStatusId !== null
             }
             onClick={() => {
               resetForm();
@@ -383,11 +386,11 @@ export default function KapsterPage() {
                     </th>
 
                     <th scope="col" className="px-6 py-4">
-                      Dibuat
+                      Dibuat (WIB)
                     </th>
 
                     <th scope="col" className="px-6 py-4">
-                      Diperbarui
+                      Diperbarui (WIB)
                     </th>
 
                     <th scope="col" className="px-6 py-4">
@@ -426,18 +429,26 @@ export default function KapsterPage() {
                       </td>
 
                       <td className="whitespace-nowrap px-6 py-4">
-                        {new Date(kapster.createdAt).toLocaleString("id-ID")}
+                        {new Date(kapster.createdAt).toLocaleString("id-ID", {
+                          timeZone: "Asia/Jakarta",
+                        })}
                       </td>
 
                       <td className="whitespace-nowrap px-6 py-4">
-                        {new Date(kapster.updatedAt).toLocaleString("id-ID")}
+                        {new Date(kapster.updatedAt).toLocaleString("id-ID", {
+                          timeZone: "Asia/Jakarta",
+                        })}
                       </td>
 
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            disabled={isSaving || deletingKapsterId !== null}
+                            disabled={
+                              isSaving ||
+                              deletingKapsterId !== null ||
+                              updatingStatusId !== null
+                            }
                             onClick={() => {
                               setDeleteError("");
                               handleEditKapster(kapster);
@@ -450,7 +461,10 @@ export default function KapsterPage() {
                           <button
                             type="button"
                             disabled={
-                              showForm || isSaving || deletingKapsterId !== null
+                              showForm ||
+                              isSaving ||
+                              deletingKapsterId !== null ||
+                              updatingStatusId !== null
                             }
                             onClick={() => handleDeleteKapster(kapster)}
                             className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
