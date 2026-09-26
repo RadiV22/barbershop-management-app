@@ -110,12 +110,11 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={isLoading}
             accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.button,
-              (pressed || isLoading) && styles.buttonPressed,
-            ]}
+            className={`mt-1 items-center rounded-xl bg-blue-600 py-4 ${
+              isLoading ? "opacity-50" : "active:opacity-80"
+            }`}
           >
-            <Text style={styles.buttonText}>
+            <Text className="text-base font-bold text-white">
               {isLoading ? "Memproses..." : "Masuk"}
             </Text>
           </Pressable>

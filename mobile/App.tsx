@@ -9,7 +9,8 @@ import {
 import AuthProvider from "./src/contexts/AuthProvider";
 import { useAuth } from "./src/hooks/useAuth";
 import LoginScreen from "./src/screens/LoginScreen";
-import HomeScreen from "./src/screens/HomeScreen";
+import MainNavigaotr from "./src/navigation/MainNavigator";
+import "./global.css";
 
 function AppContent() {
   const { user, isInitializing, sessionError, restoreSession } = useAuth();
@@ -32,7 +33,7 @@ function AppContent() {
     );
   }
 
-  return user ? <HomeScreen /> : <LoginScreen />;
+  return user ? <MainNavigaotr /> : <LoginScreen />;
 }
 
 export default function App() {
