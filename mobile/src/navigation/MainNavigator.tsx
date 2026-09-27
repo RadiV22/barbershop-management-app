@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet, Text, View } from "react-native";
 import HomeScreen from "../screens/HomeScreen";
 import MoreScreen from "../screens/MoreScreen";
+import CustomerScreen from "../screens/CustomerScreen";
 
 type MainTabParamList = {
   Home: undefined;
@@ -17,14 +18,6 @@ function OrderScreen() {
   return (
     <View style={styles.container}>
       <Text> Daftar order akan ditampilkan disini </Text>
-    </View>
-  );
-}
-
-function CustomerScreen() {
-  return (
-    <View style={styles.container}>
-      <Text> Daftar Customer akan ditampilkan disini</Text>
     </View>
   );
 }
