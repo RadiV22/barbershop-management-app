@@ -2,7 +2,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StyleSheet, Text, View } from "react-native";
 import HomeScreen from "../screens/HomeScreen";
-import MoreScreen from "../screens/MoreScreen";
+import MoreNavigator from "./MoreNavigator";
 import CustomerScreen from "../screens/CustomerScreen";
 
 type MainTabParamList = {
@@ -61,8 +61,11 @@ export default function MainNavigator() {
 
         <Tab.Screen
           name="More"
-          component={MoreScreen}
-          options={{ title: "Lainnya" }}
+          component={MoreNavigator}
+          options={{
+            title: "Lainnya",
+            headerShown: false,
+          }}
         />
       </Tab.Navigator>
     </NavigationContainer>

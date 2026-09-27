@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { useAuth } from "../hooks/useAuth";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import type { MoreStackParamList } from "../navigation/MoreNavigator";
 
-export default function MoreScreen() {
+type Props = NativeStackScreenProps<MoreStackParamList, "MoreHome">;
+
+export default function MoreScreen({ navigation }: Props) {
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -34,6 +38,19 @@ export default function MoreScreen() {
             {user?.role === "ADMIN" ? "Administrator" : "Staff"}
           </Text>
         </View>
+
+        <Pressable
+          onPress={() => navigation.navigate("Services")}
+          disabled={isLoggingOut}
+          accessibilityRole="button"
+          className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 active:opacity-80"
+        >
+          <Text className="text-base font-bold text-gray-900">Layanan</Text>
+
+          <Text className="mt-1 text-sm text-gray-500">
+            Lihat daftar layanan, harga, dan durasi.
+          </Text>
+        </Pressable>
 
         <Pressable
           onPress={handleLogout}

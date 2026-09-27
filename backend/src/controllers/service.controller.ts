@@ -162,7 +162,7 @@ export const updateService = async (
       });
     }
 
-    const { name, price, duration, isActive } = req.body ?? {};
+    const { name, price, duration, isActive } = result.data;
 
     const updateData: {
       name?: string;
@@ -228,29 +228,11 @@ export const updateService = async (
       });
     }
 
-    const data: Prisma.ServiceUpdateInput = {};
-
-    if (name !== undefined) {
-      data.name = name;
-    }
-
-    if (duration !== undefined) {
-      data.duration = duration;
-    }
-
-    if (price !== undefined) {
-      data.price = price;
-    }
-
-    if (isActive !== undefined) {
-      data.isActive = isActive;
-    }
-
     const updatedService = await prisma.service.update({
       where: {
         id: serviceId,
       },
-      data: data,
+      data: updateData,
     });
 
     return res.status(200).json({
