@@ -129,7 +129,7 @@ export const updateKapster = async (
       });
     }
 
-    const { name, isActive } = req.body ?? {};
+    const { name, isActive } = result.data;
 
     const updateData: {
       name?: string;
@@ -162,21 +162,11 @@ export const updateKapster = async (
       });
     }
 
-    const data: Prisma.KapsterUpdateInput = {};
-
-    if (name !== undefined) {
-      data.name = name;
-    }
-
-    if (isActive !== undefined) {
-      data.isActive = isActive;
-    }
-
     const updatedKapster = await prisma.kapster.update({
       where: {
         id: kapsterId,
       },
-      data: data,
+      data: updateData,
     });
 
     return res.status(200).json({
