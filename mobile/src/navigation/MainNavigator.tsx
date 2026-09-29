@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import HomeScreen from "../screens/HomeScreen";
 import MoreNavigator from "./MoreNavigator";
 import CustomerScreen from "../screens/CustomerScreen";
+import OrderNavigator from "./OrderNavigator";
 
 type MainTabParamList = {
   Home: undefined;
@@ -13,14 +14,6 @@ type MainTabParamList = {
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
-
-function OrderScreen() {
-  return (
-    <View style={styles.container}>
-      <Text> Daftar order akan ditampilkan disini </Text>
-    </View>
-  );
-}
 
 export default function MainNavigator() {
   return (
@@ -49,8 +42,11 @@ export default function MainNavigator() {
 
         <Tab.Screen
           name="Order"
-          component={OrderScreen}
-          options={{ title: "Order" }}
+          component={OrderNavigator}
+          options={{
+            title: "Order",
+            headerShown: false,
+          }}
         />
 
         <Tab.Screen

@@ -29,7 +29,7 @@ export const createPayment = async (
       });
     }
     const orderId = Number(req.params.id);
-    const { method, amountReceived } = req.body ?? {};
+    const { method, amountReceived } = result.data;
 
     if (!Number.isInteger(orderId) || orderId <= 0) {
       return res.status(400).json({

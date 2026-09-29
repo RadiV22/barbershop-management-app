@@ -66,6 +66,20 @@ export default function MoreScreen({ navigation }: Props) {
         </Pressable>
 
         <Pressable
+          onPress={() => navigation.navigate("OrderHistory")}
+          accessibilityRole="button"
+          className="mb-4 rounded-2xl border border-gray-200 bg-white p-5 active:opacity-80"
+        >
+          <Text className="text-base font-semibold text-gray-900">
+            Riwayat order
+          </Text>
+
+          <Text className="mt-1 text-sm text-gray-500">
+            Lihat order yang sudah selesai dan lunas.
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={handleLogout}
           disabled={isLoggingOut}
           accessibilityRole="button"
