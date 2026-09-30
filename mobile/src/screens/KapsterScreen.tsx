@@ -292,11 +292,11 @@ export default function KapsterScreen() {
     }
   }
   return (
-    <View className="flex-1 bg-gray-100">
+    <View className="flex-1 bg-gray-50">
       <View className="px-6 pt-6 pb-4">
         <Text className="text-2xl font-bold text-gray-900">Kapster</Text>
 
-        <Text className="mt-2 text-sm text-gray-600">
+        <Text className="mt-1 text-sm text-gray-500">
           Daftar kapster yang melayani customer barbershop.
         </Text>
 
@@ -314,7 +314,7 @@ export default function KapsterScreen() {
             updatingStatusId !== null
           }
           accessibilityRole="button"
-          className="mt-4 items-center rounded-xl bg-blue-600 py-3 active:opacity-80"
+          className="mt-4 items-center rounded-xl bg-blue-600 py-3 active:opacity-90 shadow-sm"
         >
           <Text className="text-base font-semibold text-white">
             {showForm ? "Tutup form" : "+ Tambah kapster"}
@@ -322,7 +322,7 @@ export default function KapsterScreen() {
         </Pressable>
 
         {showForm && (
-          <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <Text className="mb-4 text-lg font-bold text-gray-900">
               {editingKapsterId !== null ? "Edit kapster" : "Tambah kapster"}
             </Text>
@@ -344,7 +344,7 @@ export default function KapsterScreen() {
               placeholderTextColor="#9ca3af"
               accessibilityLabel="Nama kapster"
               autoCapitalize="words"
-              className="rounded-xl border border-gray-300 px-4 py-3 text-base text-gray-900"
+              className="rounded-xl border border-gray-300 px-4 py-3 text-base text-gray-900 focus:border-blue-500"
             />
 
             <Pressable
@@ -360,7 +360,7 @@ export default function KapsterScreen() {
               className={`mt-4 items-center rounded-xl bg-blue-600 py-3 ${
                 isSaving || isLoading || deletingKapsterId !== null
                   ? "opacity-50"
-                  : "active:opacity-80"
+                  : "active:opacity-90"
               }`}
             >
               <Text className="text-base font-semibold text-white">
@@ -372,7 +372,9 @@ export default function KapsterScreen() {
       </View>
 
       {isLoading && (
-        <Text className="px-6 text-sm text-gray-600">Memuat kapster...</Text>
+        <Text className="px-6 text-sm text-gray-500 italic">
+          Memuat data kapster...
+        </Text>
       )}
 
       {!isLoading && errorMessage !== "" && (
@@ -393,99 +395,120 @@ export default function KapsterScreen() {
             paddingBottom: 40,
           }}
           ListEmptyComponent={
-            <View className="rounded-xl bg-white p-5">
-              <Text className="text-center text-gray-500">
-                Belum ada kapster.
-              </Text>
+            <View className="rounded-xl bg-white p-5 border border-gray-200 items-center">
+              <Text className="text-gray-400">Belum ada kapster.</Text>
             </View>
           }
           renderItem={({ item }) => (
-            <View className="mb-3 rounded-2xl border border-gray-200 bg-white p-5">
-              <Text className="text-lg font-bold text-gray-900">
-                {item.name}
-              </Text>
-
-              <View
-                className={`mt-3 self-start rounded-full px-3 py-1 ${
-                  item.isActive ? "bg-green-100" : "bg-gray-100"
-                }`}
-              >
+            <View className="mb-3 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              {/* Baris Atas: Nama Kapster & Tag Status */}
+              <View className="flex-row items-center justify-between">
                 <Text
-                  className={`text-xs font-semibold ${
-                    item.isActive ? "text-green-700" : "text-gray-500"
+                  className="flex-1 text-base font-bold text-gray-900 pr-2"
+                  numberOfLines={1}
+                >
+                  {item.name}
+                </Text>
+
+                <View
+                  className={`rounded-full px-2.5 py-0.5 border ${
+                    item.isActive
+                      ? "bg-green-50 border-green-200"
+                      : "bg-gray-50 border-gray-200"
                   }`}
                 >
-                  {item.isActive ? "Aktif" : "Nonaktif"}
-                </Text>
+                  <Text
+                    className={`text-xs font-semibold ${
+                      item.isActive ? "text-green-700" : "text-gray-500"
+                    }`}
+                  >
+                    {item.isActive ? "Aktif" : "Nonaktif"}
+                  </Text>
+                </View>
               </View>
-              <Pressable
-                onPress={() => handleEditKapster(item)}
-                disabled={
-                  isSaving ||
-                  isLoading ||
-                  isRefreshing ||
-                  deletingKapsterId !== null ||
-                  updatingStatusId !== null
-                }
-                accessibilityRole="button"
-                className="mt-4 self-start rounded-lg bg-blue-50 px-4 py-2 active:opacity-80"
-              >
-                <Text className="font-semibold text-blue-700">Edit</Text>
-              </Pressable>
 
-              <Pressable
-                onPress={() => handleToggleKapsterStatus(item)}
-                disabled={
-                  isSaving ||
-                  isLoading ||
-                  isRefreshing ||
-                  deletingKapsterId !== null ||
-                  updatingStatusId !== null
-                }
-                accessibilityRole="button"
-                className={`mt-2 self-start rounded-lg px-4 py-2 ${
-                  item.isActive ? "bg-amber-50" : "bg-green-50"
-                } ${
-                  isSaving ||
-                  deletingKapsterId !== null ||
-                  updatingStatusId !== null
-                    ? "opacity-50"
-                    : "active:opacity-80"
-                }`}
-              >
-                <Text
-                  className={`font-semibold ${
-                    item.isActive ? "text-amber-700" : "text-green-700"
+              {/* Garis Pembatas Tipis */}
+              <View className="my-4 h-[1px] bg-gray-100" />
+
+              {/* Baris Bawah: Kelompok Tombol Aksi */}
+              <View className="flex-row items-center justify-between">
+                {/* Sisi Kiri: Mengubah Status (Aktif/Nonaktif) */}
+                <Pressable
+                  onPress={() => handleToggleKapsterStatus(item)}
+                  disabled={
+                    isSaving ||
+                    isLoading ||
+                    isRefreshing ||
+                    deletingKapsterId !== null ||
+                    updatingStatusId !== null
+                  }
+                  accessibilityRole="button"
+                  className={`rounded-xl border px-3 py-2 ${
+                    item.isActive
+                      ? "bg-amber-50 border-amber-200"
+                      : "bg-green-50 border-green-200"
+                  } ${
+                    isSaving ||
+                    deletingKapsterId !== null ||
+                    updatingStatusId !== null
+                      ? "opacity-50"
+                      : "active:opacity-80"
                   }`}
                 >
-                  {updatingStatusId === item.id
-                    ? "Memproses..."
-                    : item.isActive
-                      ? "Nonaktifkan"
-                      : "Aktifkan"}
-                </Text>
-              </Pressable>
+                  <Text
+                    className={`text-xs font-semibold ${
+                      item.isActive ? "text-amber-700" : "text-green-700"
+                    }`}
+                  >
+                    {updatingStatusId === item.id
+                      ? "Memproses..."
+                      : item.isActive
+                        ? "Nonaktifkan"
+                        : "Aktifkan"}
+                  </Text>
+                </Pressable>
 
-              <Pressable
-                onPress={() => confirmDeleteKapster(item)}
-                disabled={
-                  isSaving ||
-                  isLoading ||
-                  isRefreshing ||
-                  deletingKapsterId !== null ||
-                  updatingStatusId !== null
-                }
-                accessibilityRole="button"
-                className={`mt-2 self-start rounded-lg bg-red-50 px-4 py-2 ${
-                  isSaving || isLoading || deletingKapsterId !== null
-                    ? "opacity-50"
-                    : "active:opacity-80"
-                }`}
-              >
-                <Text className="font-semibold text-red-700">
-                  {deletingKapsterId === item.id ? "Menghapus..." : "Hapus"}
-                </Text>
-              </Pressable>
+                {/* Sisi Kanan: Edit dan Hapus */}
+                <View className="flex-row items-center space-x-2">
+                  <Pressable
+                    onPress={() => handleEditKapster(item)}
+                    disabled={
+                      isSaving ||
+                      isLoading ||
+                      isRefreshing ||
+                      deletingKapsterId !== null ||
+                      updatingStatusId !== null
+                    }
+                    accessibilityRole="button"
+                    className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 active:opacity-80"
+                  >
+                    <Text className="text-xs font-semibold text-blue-700">
+                      Edit
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => confirmDeleteKapster(item)}
+                    disabled={
+                      isSaving ||
+                      isLoading ||
+                      isRefreshing ||
+                      deletingKapsterId !== null ||
+                      updatingStatusId !== null
+                    }
+                    accessibilityRole="button"
+                    className={`rounded-xl border border-red-200 bg-red-50 px-3 py-2 ${
+                      isSaving || isLoading || deletingKapsterId !== null
+                        ? "opacity-50"
+                        : "active:opacity-80"
+                    }`}
+                  >
+                    <Text className="text-xs font-semibold text-red-700">
+                      {deletingKapsterId === item.id ? "..." : "Hapus"}
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           )}
         />
