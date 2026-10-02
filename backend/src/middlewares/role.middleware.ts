@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { Role } from "../generated/prisma/client.js";
 
-export const role = (allowedRoles: string[]) => {
+export const role = (allowedRoles: Role[]) => {
   return (req: Request, res: Response, Next: NextFunction) => {
     try {
       const user = req.user;
