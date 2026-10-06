@@ -80,7 +80,7 @@ export default function ServicePage() {
             services.map((service) => (
               <article
                 key={service.id}
-                className="rounded-2xl border border-gray-200 bg-white p-5"
+                className="rounded-2xl border border-soft bg-white p-5"
               >
                 <h2 className="text-lg font-bold text-gray-900">
                   {service.name}
@@ -90,7 +90,7 @@ export default function ServicePage() {
                   Durasi: {service.duration} menit
                 </p>
 
-                <p className="mt-4 text-lg font-bold text-blue-600">
+                <p className="mt-4 text-lg font-bold text-primary">
                   Rp {service.price.toLocaleString("id-ID")}
                 </p>
               </article>

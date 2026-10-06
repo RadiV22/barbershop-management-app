@@ -48,40 +48,66 @@ export default function HomePage() {
     };
   }, []);
   return (
-    <section className="px-5 py-6">
-      <div className="rounded-3xl bg-gray-900 px-6 py-8 text-white sm:p-10">
-        <p className="text-sm font-semibold tracking-wide text-blue-300">
-          BARBERSHOP
+    <section className="px-5 py-6 sm:px-8 sm:py-8">
+      <header className="mb-6">
+        <p className="text-lg font-bold tracking-tight text-primary">
+          Barbershop
         </p>
 
-        <h1 className="mt-3 text-3xl leading-tight font-bold sm:text-4xl">
-          Saatnya tampil
-          <br />
-          lebih rapi.
-        </h1>
-
-        <p className="mt-4 max-w-md text-sm leading-6 text-gray-300">
-          Temukan layanan perawatan rambut dan pilih gaya yang sesuai dengan
-          dirimu.
+        <p className="mt-1 text-sm text-gray-500">
+          Perawatan rambut untuk keseharianmu.
         </p>
+      </header>
 
-        <a
-          href="#layanan-beranda"
-          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          Jelajahi layanan
-        </a>
+      <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-8 sm:p-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-secondary/30"
+        />
+
+        <div className="relative">
+          <p className="text-xs font-semibold tracking-widest text-soft">
+            TAMPIL RAPI, LEBIH PERCAYA DIRI
+          </p>
+
+          <h1 className="mt-4 text-3xl leading-tight font-bold text-white sm:text-4xl">
+            Saatnya merawat
+            <br />
+            gaya rambutmu.
+          </h1>
+
+          <p className="mt-4 max-w-md text-sm leading-6 text-white">
+            Temukan layanan yang sesuai dan rencanakan kunjunganmu ke
+            barbershop.
+          </p>
+
+          <a
+            href="#layanan-beranda"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-primary transition-colors hover:bg-soft"
+          >
+            Jelajahi layanan
+          </a>
+        </div>
       </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-900">Layanan kami</h2>
+      <section
+        id="layanan-beranda"
+        aria-labelledby="layanan-title"
+        className="mt-8 scroll-mt-6"
+      >
+        <h2
+          id="layanan-title"
+          className="text-xl font-bold tracking-tight text-gray-900"
+        >
+          Layanan kami
+        </h2>
 
-        <p className="mt-2 text-sm text-gray-600">
-          Pilihan perawatan untuk kunjunganmu.
+        <p className="mt-2 text-sm leading-6 text-gray-500">
+          Pilih perawatan yang sesuai dengan kebutuhanmu.
         </p>
 
         {isLoading && (
-          <p role="status" className="mt-4 text-sm text-gray-500">
+          <p role="status" className="mt-5 text-sm text-gray-500">
             Memuat layanan...
           </p>
         )}
@@ -89,33 +115,42 @@ export default function HomePage() {
         {!isLoading && errorMessage && (
           <p
             role="alert"
-            className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+            className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700"
           >
             {errorMessage}
           </p>
         )}
 
         {!isLoading && !errorMessage && (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
             {services.length === 0 ? (
-              <p className="text-sm text-gray-500">
+              <p className="rounded-2xl border border-soft bg-white p-5 text-sm text-gray-500 sm:col-span-2">
                 Belum ada layanan yang tersedia.
               </p>
             ) : (
               services.map((service) => (
                 <article
                   key={service.id}
-                  className="rounded-2xl border border-gray-200 bg-white p-5"
+                  className="flex flex-col rounded-2xl border border-soft bg-white p-5"
                 >
-                  <h3 className="font-bold text-gray-900">{service.name}</h3>
+                  <span
+                    aria-hidden="true"
+                    className="mb-4 h-1 w-10 rounded-full bg-secondary"
+                  />
+
+                  <h3 className="text-base font-bold text-gray-900">
+                    {service.name}
+                  </h3>
 
                   <p className="mt-2 text-sm text-gray-500">
-                    {service.duration} menit
+                    Durasi {service.duration} menit
                   </p>
 
-                  <p className="mt-3 font-bold text-blue-600">
-                    Rp {service.price.toLocaleString("id-ID")}
-                  </p>
+                  <div className="mt-auto pt-5">
+                    <p className="border-t border-soft/60 pt-4 text-lg font-bold text-primary">
+                      Rp {service.price.toLocaleString("id-ID")}
+                    </p>
+                  </div>
                 </article>
               ))
             )}
@@ -124,11 +159,11 @@ export default function HomePage() {
 
         <Link
           to="/services"
-          className="mt-4 inline-block py-2 text-sm font-semibold text-blue-600"
+          className="mt-5 flex min-h-12 items-center justify-center rounded-xl border border-primary px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-soft/50"
         >
-          Lihat semua layanan →
+          Lihat semua layanan
         </Link>
-      </div>
+      </section>
     </section>
   );
 }
