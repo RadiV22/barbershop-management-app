@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 
@@ -10,6 +10,12 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const { user, login, isInitializing } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const serviceIdsParam = searchParams.get("services");
+
+  const destination = serviceIdsParam
+    ? `/booking?services=${encodeURIComponent(serviceIdsParam)}`
+    : "/account";
 
   async function handleLogin() {
     if (isSubmitting || isInitializing) return;
@@ -25,7 +31,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate("/account", { replace: true });
+      navigate(destination, { replace: true });
     } catch (error) {
       let message = "Gagal masuk. Silakan coba lagi.";
 
@@ -52,7 +58,7 @@ export default function LoginPage() {
   }
 
   if (user) {
-    return <Navigate to="/account" replace />;
+    return <Navigate to={destination} replace />;
   }
 
   return (
@@ -143,7 +149,14 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-sm text-gray-500">
               Belum punya akun?{" "}
-              <Link to="/register" className="font-semibold text-primary">
+              <Link
+                to={
+                  serviceIdsParam
+                    ? `/register?services=${encodeURIComponent(serviceIdsParam)}`
+                    : "/register"
+                }
+                className="font-semibold text-primary"
+              >
                 Daftar
               </Link>
             </p>

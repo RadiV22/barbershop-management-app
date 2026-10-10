@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import api from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
@@ -14,6 +14,16 @@ export default function RegisterPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isRegistered, setIsRegistered] = useState(false);
   const { user, isInitializing } = useAuth();
+  const [searchParams] = useSearchParams();
+  const serviceIdsParam = searchParams.get("services");
+
+  const loginPath = serviceIdsParam
+    ? `/login?services=${encodeURIComponent(serviceIdsParam)}`
+    : "/login";
+
+  const destination = serviceIdsParam
+    ? `/booking?services=${encodeURIComponent(serviceIdsParam)}`
+    : "/account";
 
   const inputClassName =
     "w-full rounded-xl border border-soft px-4 py-3 text-base text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -102,7 +112,7 @@ export default function RegisterPage() {
   }
 
   if (user) {
-    return <Navigate to="/account" replace />;
+    return <Navigate to={destination} replace />;
   }
 
   if (isRegistered) {
@@ -119,7 +129,7 @@ export default function RegisterPage() {
           </p>
 
           <Link
-            to="/login"
+            to={loginPath}
             className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
           >
             Masuk sekarang
@@ -145,14 +155,14 @@ export default function RegisterPage() {
         </p>
 
         <Link
-          to="/login"
+          to={loginPath}
           className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
         >
           Masuk sekarang
         </Link>
       </div>
       <div className="mx-auto max-w-md">
-        <Link to="/login" className="text-sm font-semibold text-primary">
+        <Link to={loginPath} className="text-sm font-semibold text-primary">
           ← Kembali ke login
         </Link>
 
@@ -308,7 +318,7 @@ export default function RegisterPage() {
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Sudah punya akun?{" "}
-            <Link to="/login" className="font-semibold text-primary">
+            <Link to={loginPath} className="font-semibold text-primary">
               Masuk
             </Link>
           </p>

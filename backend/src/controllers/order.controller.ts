@@ -5,6 +5,17 @@ import {
   createOrderSchema,
   updateOrderStatusSchema,
 } from "../schemas/order.schema.js";
+import { SCHEDULE_CONFIG } from "../config/schedule.config.js";
+import {
+  lockActiveKapster,
+  findScheduleConflict,
+} from "../services/schedule.service.js";
+
+import {
+  addMinutes,
+  getTodayWib,
+  parseWibDate,
+} from "../utils/schedule.utils.js";
 
 export const createOrder = async (
   req: Request,
@@ -97,6 +108,32 @@ export const createOrder = async (
       });
     }
 
+    const totalDuration = orderItems.reduce(
+      (total, item) => total + item.quantity * item.duration,
+      0,
+    );
+
+    const operatingMinutes =
+      SCHEDULE_CONFIG.closingMinutes - SCHEDULE_CONFIG.openingMinutes;
+
+    if (
+      orderItems.some(
+        (item) =>
+          !Number.isSafeInteger(item.quantity) ||
+          item.quantity <= 0 ||
+          !Number.isSafeInteger(item.duration) ||
+          item.duration <= 0,
+      ) ||
+      !Number.isSafeInteger(totalDuration) ||
+      totalDuration <= 0 ||
+      totalDuration + SCHEDULE_CONFIG.bufferMinutes > operatingMinutes
+    ) {
+      return res.status(400).json({
+        message:
+          "Total durasi layanan tidak valid atau melebihi jam operasional.",
+      });
+    }
+
     const subtotal = orderItems.reduce((total, item) => {
       return total + item.quantity * item.unitPrice;
     }, 0);
@@ -109,9 +146,9 @@ export const createOrder = async (
 
     const total = subtotal - discount;
 
-    const newOrder = await prisma.$transaction(
+    const transactionResult = await prisma.$transaction(
       async (tx) => {
-        // Gunakan kunci yang sama dengan deleteCustomer.
+        // Pertahankan penguncian customer seperti sebelumnya.
         const availableCustomers = await tx.$queryRaw<{ id: number }[]>`
       SELECT "id"
       FROM "customers"
@@ -121,22 +158,109 @@ export const createOrder = async (
     `;
 
         if (availableCustomers.length === 0) {
-          return null;
+          return {
+            success: false as const,
+            statusCode: 404,
+            message: "Customer sudah dihapus. Pilih customer lain.",
+          };
         }
 
-        return tx.order.create({
+        // Gunakan penguncian kapster yang sama dengan booking online.
+        const lockedKapster = await lockActiveKapster(tx, kapsterId);
+
+        if (!lockedKapster) {
+          return {
+            success: false as const,
+            statusCode: 409,
+            message: "Kapster tidak tersedia atau sudah nonaktif.",
+          };
+        }
+
+        // Waktu dihitung setelah mendapatkan kunci kapster.
+        const startsAt = new Date();
+        const dayStart = parseWibDate(getTodayWib(startsAt));
+
+        if (!dayStart) {
+          throw new Error("Gagal menentukan tanggal operasional");
+        }
+
+        const openingAt = addMinutes(dayStart, SCHEDULE_CONFIG.openingMinutes);
+
+        const closingAt = addMinutes(dayStart, SCHEDULE_CONFIG.closingMinutes);
+
+        const endsAt = addMinutes(startsAt, totalDuration);
+
+        const blockedUntil = addMinutes(endsAt, SCHEDULE_CONFIG.bufferMinutes);
+
+        if (
+          startsAt.getTime() < openingAt.getTime() ||
+          blockedUntil.getTime() > closingAt.getTime()
+        ) {
+          return {
+            success: false as const,
+            statusCode: 409,
+            message:
+              "Order langsung harus berada dalam jam operasional 10.00–21.00 WIB, termasuk durasi layanan dan buffer.",
+          };
+        }
+
+        // Pengaman untuk order lama yang belum memiliki Schedule.
+        // Juga menolak jika jadwal perkiraan telah habis,
+        // tetapi pengerjaannya belum dinyatakan selesai.
+        const unfinishedOrder = await tx.order.findFirst({
+          where: {
+            kapsterId,
+            serviceStatus: {
+              not: "COMPLETED",
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (unfinishedOrder) {
+          return {
+            success: false as const,
+            statusCode: 409,
+            message:
+              "Kapster masih memiliki order yang belum selesai. Periksa order tersebut atau pilih kapster lain.",
+          };
+        }
+
+        const conflictingSchedule = await findScheduleConflict(
+          tx,
+          kapsterId,
+          startsAt,
+          blockedUntil,
+          startsAt,
+        );
+
+        if (conflictingSchedule) {
+          return {
+            success: false as const,
+            statusCode: 409,
+            message:
+              "Waktu pengerjaan dan buffer bertabrakan dengan jadwal kapster. Silakan pilih kapster lain.",
+          };
+        }
+
+        const order = await tx.order.create({
           data: {
             customerId,
             kapsterId,
             createdById: userId,
+            checkInAt: startsAt,
             notes: notes?.trim() || null,
             subtotal,
             discountPercent,
             discount,
             total,
+
             items: {
               create: orderItems,
             },
+
             statusHistories: {
               create: {
                 fromStatus: null,
@@ -156,21 +280,40 @@ export const createOrder = async (
             statusHistories: true,
           },
         });
+
+        await tx.schedule.create({
+          data: {
+            customerId,
+            kapsterId,
+            orderId: order.id,
+            source: "WALK_IN",
+            status: "CONFIRMED",
+            startsAt,
+            endsAt,
+            blockedUntil,
+            holdExpiresAt: null,
+          },
+        });
+
+        return {
+          success: true as const,
+          order,
+        };
       },
       {
         isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
       },
     );
 
-    if (!newOrder) {
-      return res.status(404).json({
-        message: "Customer sudah dihapus. Pilih customer lain.",
+    if (!transactionResult.success) {
+      return res.status(transactionResult.statusCode).json({
+        message: transactionResult.message,
       });
     }
 
     return res.status(201).json({
       message: "Order berhasil dibuat",
-      data: newOrder,
+      data: transactionResult.order,
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -414,47 +557,303 @@ export const updateOrderStatus = async (
       });
     }
 
-    const updatedOrder = await prisma.$transaction(async (tx) => {
-      const result = await tx.order.updateMany({
-        where: {
-          id: orderId,
-          serviceStatus: order.serviceStatus,
-        },
-        data: {
-          serviceStatus,
-          completedAt: serviceStatus === "COMPLETED" ? new Date() : null,
-        },
-      });
+    const transactionResult = await prisma.$transaction(
+      async (tx) => {
+        // Kunci kapster tanpa menolak kapster nonaktif.
+        // Penyelesaian pekerjaan tetap harus bisa dicatat.
+        const lockedKapsters = await tx.$queryRaw<
+          { id: number; isActive: boolean }[]
+        >`
+      SELECT "id", "is_active" AS "isActive"
+      FROM "kapsters"
+      WHERE "id" = ${order.kapsterId}
+      FOR UPDATE
+    `;
 
-      if (result.count === 0) {
-        return null;
-      }
+        const lockedKapster = lockedKapsters[0];
 
-      await tx.orderStatusHistory.create({
-        data: {
-          orderId,
-          fromStatus: order.serviceStatus,
-          toStatus: serviceStatus,
-          changedById: userId,
-        },
-      });
+        if (!lockedKapster) {
+          return {
+            success: false as const,
+            message: "Kapster sudah tidak tersedia.",
+          };
+        }
 
-      return tx.order.findUniqueOrThrow({
-        where: {
-          id: orderId,
-        },
-      });
-    });
+        // Baca ulang setelah memperoleh kunci.
+        const currentOrder = await tx.order.findUnique({
+          where: {
+            id: orderId,
+          },
+          include: {
+            items: true,
+            schedule: true,
+          },
+        });
 
-    if (!updatedOrder) {
+        if (
+          !currentOrder ||
+          currentOrder.kapsterId !== order.kapsterId ||
+          currentOrder.serviceStatus !== order.serviceStatus
+        ) {
+          return {
+            success: false as const,
+            message: "Order sudah berubah. Muat ulang dan coba kembali.",
+          };
+        }
+
+        const schedule = currentOrder.schedule;
+
+        if (schedule && schedule.status !== "CONFIRMED") {
+          return {
+            success: false as const,
+            message:
+              "Status jadwal tidak sesuai untuk memproses order. Periksa data order.",
+          };
+        }
+
+        const now = new Date();
+
+        let startsAt = schedule?.startsAt ?? currentOrder.checkInAt;
+        let endsAt = now;
+        let warning: string | null = null;
+
+        if (serviceStatus === "IN_SERVICE") {
+          if (!lockedKapster.isActive) {
+            return {
+              success: false as const,
+              message: "Kapster nonaktif tidak dapat memulai layanan baru.",
+            };
+          }
+
+          // Jangan mulai jika kapster masih mengerjakan order lain.
+          const otherInServiceOrder = await tx.order.findFirst({
+            where: {
+              kapsterId: currentOrder.kapsterId,
+              id: {
+                not: orderId,
+              },
+              serviceStatus: "IN_SERVICE",
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (otherInServiceOrder) {
+            return {
+              success: false as const,
+              message: "Kapster masih mengerjakan order lain.",
+            };
+          }
+
+          // Order lama lain belum memiliki waktu yang bisa diperiksa.
+          const otherUnscheduledOrder = await tx.order.findFirst({
+            where: {
+              kapsterId: currentOrder.kapsterId,
+              id: {
+                not: orderId,
+              },
+              serviceStatus: {
+                not: "COMPLETED",
+              },
+              schedule: {
+                is: null,
+              },
+            },
+            select: {
+              id: true,
+            },
+          });
+
+          if (otherUnscheduledOrder) {
+            return {
+              success: false as const,
+              message:
+                "Kapster memiliki order lain yang belum selesai dan belum memiliki jadwal. Periksa order lama tersebut dahulu.",
+            };
+          }
+
+          const totalDuration = currentOrder.items.reduce(
+            (total, item) => total + item.quantity * item.duration,
+            0,
+          );
+
+          if (
+            currentOrder.items.length === 0 ||
+            currentOrder.items.some(
+              (item) =>
+                !Number.isSafeInteger(item.quantity) ||
+                item.quantity <= 0 ||
+                !Number.isSafeInteger(item.duration) ||
+                item.duration <= 0,
+            ) ||
+            !Number.isSafeInteger(totalDuration) ||
+            totalDuration <= 0 ||
+            totalDuration + SCHEDULE_CONFIG.bufferMinutes >
+              SCHEDULE_CONFIG.closingMinutes - SCHEDULE_CONFIG.openingMinutes
+          ) {
+            return {
+              success: false as const,
+              message: "Durasi order tidak valid. Periksa rincian layanan.",
+            };
+          }
+
+          startsAt = now;
+          endsAt = addMinutes(now, totalDuration);
+
+          const dayStart = parseWibDate(getTodayWib(now));
+
+          if (!dayStart) {
+            throw new Error("Gagal menentukan tanggal operasional");
+          }
+
+          const openingAt = addMinutes(
+            dayStart,
+            SCHEDULE_CONFIG.openingMinutes,
+          );
+
+          const closingAt = addMinutes(
+            dayStart,
+            SCHEDULE_CONFIG.closingMinutes,
+          );
+
+          if (
+            startsAt.getTime() < openingAt.getTime() ||
+            addMinutes(endsAt, SCHEDULE_CONFIG.bufferMinutes).getTime() >
+              closingAt.getTime()
+          ) {
+            return {
+              success: false as const,
+              message:
+                "Waktu mulai, durasi layanan, dan buffer melewati jam operasional.",
+            };
+          }
+        }
+
+        if (startsAt.getTime() > endsAt.getTime()) {
+          return {
+            success: false as const,
+            message:
+              "Waktu selesai lebih awal dari waktu mulai. Periksa jadwal order.",
+          };
+        }
+
+        const blockedUntil = addMinutes(endsAt, SCHEDULE_CONFIG.bufferMinutes);
+
+        const conflict = await findScheduleConflict(
+          tx,
+          currentOrder.kapsterId,
+          startsAt,
+          blockedUntil,
+          now,
+          schedule?.id,
+        );
+
+        if (conflict && serviceStatus === "IN_SERVICE") {
+          return {
+            success: false as const,
+            message:
+              "Jika dimulai sekarang, layanan dan buffer bertabrakan dengan jadwal lain. Periksa jadwal kapster.",
+          };
+        }
+
+        if (conflict && serviceStatus === "COMPLETED") {
+          warning =
+            "Order selesai, tetapi waktu pengerjaan atau buffer bertabrakan dengan jadwal lain. Staff perlu menindaklanjuti jadwal terkait.";
+        }
+
+        // Semua pemeriksaan penolakan dilakukan sebelum menulis data.
+        const updated = await tx.order.updateMany({
+          where: {
+            id: orderId,
+            kapsterId: currentOrder.kapsterId,
+            serviceStatus: currentOrder.serviceStatus,
+          },
+          data: {
+            serviceStatus,
+            completedAt: serviceStatus === "COMPLETED" ? now : null,
+          },
+        });
+
+        if (updated.count === 0) {
+          return {
+            success: false as const,
+            message: "Order sudah berubah. Muat ulang dan coba kembali.",
+          };
+        }
+
+        if (schedule) {
+          await tx.schedule.update({
+            where: {
+              id: schedule.id,
+            },
+            data: {
+              startsAt,
+              endsAt,
+              blockedUntil,
+              status: serviceStatus === "COMPLETED" ? "COMPLETED" : "CONFIRMED",
+              holdExpiresAt: null,
+            },
+          });
+        } else {
+          // Order lama dibuat oleh staff sebelum Schedule digunakan.
+          await tx.schedule.create({
+            data: {
+              customerId: currentOrder.customerId,
+              kapsterId: currentOrder.kapsterId,
+              orderId,
+              source: "WALK_IN",
+              status: serviceStatus === "COMPLETED" ? "COMPLETED" : "CONFIRMED",
+              startsAt,
+              endsAt,
+              blockedUntil,
+              holdExpiresAt: null,
+            },
+          });
+        }
+
+        await tx.orderStatusHistory.create({
+          data: {
+            orderId,
+            fromStatus: currentOrder.serviceStatus,
+            toStatus: serviceStatus,
+            changedById: userId,
+            changedAt: now,
+          },
+        });
+
+        const updatedOrder = await tx.order.findUniqueOrThrow({
+          where: {
+            id: orderId,
+          },
+          include: {
+            schedule: true,
+          },
+        });
+
+        return {
+          success: true as const,
+          order: updatedOrder,
+          warning,
+        };
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      },
+    );
+
+    if (!transactionResult.success) {
       return res.status(409).json({
-        message: "Order sudah berubah. Muat ulang data lalu coba kembali",
+        message: transactionResult.message,
       });
     }
 
     return res.status(200).json({
-      message: "Status order berhasil diperbarui",
-      data: updatedOrder,
+      message: transactionResult.warning
+        ? "Status order berhasil diperbarui. Ada konflik jadwal yang perlu diperiksa."
+        : "Status order berhasil diperbarui",
+      data: transactionResult.order,
+      warning: transactionResult.warning,
     });
   } catch (error) {
     next(error);
@@ -526,56 +925,143 @@ export const deleteOrder = async (
   try {
     const orderId = Number(req.params.id);
 
-    if (!Number.isInteger(orderId) || orderId <= 0) {
+    if (!Number.isInteger(orderId) || orderId <= 0 || orderId > 2147483647) {
       return res.status(400).json({
-        message: "ID order harus berupa bilangan bulat positif",
+        message: "ID order harus berupa bilangan bulat positif yang valid",
       });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({
-        where: {
-          id: orderId,
-        },
-      });
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // Cari kapster yang perlu dikunci.
+        const initialOrder = await tx.order.findUnique({
+          where: {
+            id: orderId,
+          },
+          select: {
+            kapsterId: true,
+          },
+        });
 
-      if (!order) {
-        return "NOT_FOUND";
-      }
+        if (!initialOrder) {
+          return "NOT_FOUND";
+        }
 
-      if (
-        order.serviceStatus !== "WAITING" ||
-        order.paymentStatus !== "UNPAID"
-      ) {
-        return "NOT_ALLOWED";
-      }
+        // Gunakan urutan kunci yang sama dengan perubahan status order.
+        // Kapster nonaktif tetap boleh memiliki order yang dibatalkan.
+        await tx.$queryRaw`
+          SELECT "id"
+          FROM "kapsters"
+          WHERE "id" = ${initialOrder.kapsterId}
+          FOR UPDATE
+        `;
 
-      await tx.orderStatusHistory.deleteMany({
-        where: {
-          orderId: orderId,
-        },
-      });
+        // Kunci order agar pembayaran/perubahan order tidak berjalan
+        // bersamaan dengan penghapusan.
+        const lockedOrders = await tx.$queryRaw<{ id: number }[]>`
+          SELECT "id"
+          FROM "orders"
+          WHERE "id" = ${orderId}
+          FOR UPDATE
+        `;
 
-      await tx.orderItem.deleteMany({
-        where: {
-          orderId: orderId,
-        },
-      });
+        if (lockedOrders.length === 0) {
+          return "NOT_FOUND";
+        }
 
-      await tx.order.delete({
-        where: {
-          id: orderId,
-          serviceStatus: "WAITING",
-          paymentStatus: "UNPAID",
-        },
-      });
+        // Baca kembali setelah mendapatkan kunci.
+        const order = await tx.order.findUnique({
+          where: {
+            id: orderId,
+          },
+          include: {
+            payment: true,
+            schedule: {
+              include: {
+                booking: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        });
 
-      return "DELETED";
-    });
+        if (!order) {
+          return "NOT_FOUND";
+        }
+
+        if (order.kapsterId !== initialOrder.kapsterId) {
+          return "CHANGED";
+        }
+
+        if (
+          order.serviceStatus !== "WAITING" ||
+          order.paymentStatus !== "UNPAID" ||
+          order.payment !== null
+        ) {
+          return "NOT_ALLOWED";
+        }
+
+        // Booking online memerlukan alur pembatalan tersendiri.
+        if (
+          order.schedule &&
+          (order.schedule.source === "ONLINE" ||
+            order.schedule.booking !== null)
+        ) {
+          return "ONLINE_BOOKING";
+        }
+
+        if (order.schedule) {
+          await tx.schedule.update({
+            where: {
+              id: order.schedule.id,
+            },
+            data: {
+              status: "CANCELLED",
+              orderId: null,
+              holdExpiresAt: null,
+            },
+          });
+        }
+
+        await tx.orderStatusHistory.deleteMany({
+          where: {
+            orderId,
+          },
+        });
+
+        await tx.orderItem.deleteMany({
+          where: {
+            orderId,
+          },
+        });
+
+        await tx.order.delete({
+          where: {
+            id: orderId,
+            serviceStatus: "WAITING",
+            paymentStatus: "UNPAID",
+          },
+        });
+
+        return "DELETED";
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      },
+    );
 
     if (result === "NOT_FOUND") {
       return res.status(404).json({
         message: "Order tidak ditemukan",
+      });
+    }
+
+    if (result === "CHANGED") {
+      return res.status(409).json({
+        message: "Order sudah berubah. Muat ulang data lalu coba kembali.",
       });
     }
 
@@ -586,13 +1072,20 @@ export const deleteOrder = async (
       });
     }
 
+    if (result === "ONLINE_BOOKING") {
+      return res.status(409).json({
+        message:
+          "Order dari booking online tidak dapat dihapus melalui fitur ini.",
+      });
+    }
+
     return res.status(200).json({
       message:
-        "Order beserta rincian layanan dan riwayat status berhasil dihapus",
+        "Order berhasil dihapus. Jika memiliki jadwal, jadwal tersebut sudah dibatalkan.",
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
+      if (error.code === "P2025" || error.code === "P2034") {
         return res.status(409).json({
           message:
             "Order sudah berubah atau dihapus. Muat ulang data sebelum mencoba lagi.",

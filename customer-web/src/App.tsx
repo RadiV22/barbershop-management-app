@@ -7,6 +7,7 @@ import MyOrdersPage from "./pages/MyOrdersPage";
 import AccountPage from "./pages/AccountPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import BookingPage from "./pages/BookingPage";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="services" element={<ServicePage />} />
           <Route path="orders" element={<MyOrdersPage />} />
           <Route path="account" element={<AccountPage />} />
+          <Route path="booking" element={<BookingPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
         <Route path="login" element={<LoginPage />} />

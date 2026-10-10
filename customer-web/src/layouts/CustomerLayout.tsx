@@ -9,7 +9,7 @@ const navigationItems = [
 
 export default function CustomerLayout() {
   return (
-    <div className="min-h-dvh bg-[#F7FAF9]">
+    <div className="min-h-dvh bg-background">
       <main className="mx-auto max-w-3xl pb-[calc(6rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>

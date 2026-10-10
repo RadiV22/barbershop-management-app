@@ -30,3 +30,31 @@ export const getPublicServices = async (
     next(error);
   }
 };
+
+export const getPublicKapsters = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const kapsters = await prisma.kapster.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Daftar kapster aktif berhasil diambil",
+      data: kapsters,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

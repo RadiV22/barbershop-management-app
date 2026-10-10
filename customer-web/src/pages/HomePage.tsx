@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
+import { useAuth } from "../hooks/useAuth";
 
 interface Service {
   id: number;
@@ -18,6 +19,7 @@ export default function HomePage() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const { user, isInitializing } = useAuth();
 
   useEffect(() => {
     let isActive = true;
@@ -49,20 +51,29 @@ export default function HomePage() {
   }, []);
   return (
     <section className="px-5 py-6 sm:px-8 sm:py-8">
-      <header className="mb-6">
-        <p className="text-lg font-bold tracking-tight text-primary">
-          Barbershop
-        </p>
+      <header className="mb-6 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-primary">Barbershop</p>
 
-        <p className="mt-1 text-sm text-gray-500">
-          Perawatan rambut untuk keseharianmu.
-        </p>
+          <h1 className="mt-1 break-words text-2xl font-bold text-gray-900">
+            {user ? `Halo, ${user.name}` : "Saatnya tampil lebih rapi"}
+          </h1>
+        </div>
+
+        {!isInitializing && (
+          <Link
+            to={user ? "/account" : "/login"}
+            className="shrink-0 rounded-xl border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-soft"
+          >
+            {user ? "Akun saya" : "Masuk"}
+          </Link>
+        )}
       </header>
 
       <div className="relative overflow-hidden rounded-3xl bg-primary px-6 py-8 sm:p-10">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-secondary/30"
+          className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-accent/30"
         />
 
         <div className="relative">

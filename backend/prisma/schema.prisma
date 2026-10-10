@@ -22,6 +22,7 @@ model Service {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   orderItems OrderItem[]
+  bookingItems BookingItem[]
 
   @@map("services")
 }
@@ -39,6 +40,7 @@ model Customer {
 
   orders     Order[]
   membership Membership?
+  schedules  Schedule[]
 
   @@map("customers")
 }
@@ -64,7 +66,8 @@ model Kapster {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  orders Order[]
+  orders    Order[]
+  schedules Schedule[]
 
   @@map("kapsters")
 }
@@ -130,6 +133,7 @@ model Order {
   createdBy   User? @relation("OrderCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
   statusHistories OrderStatusHistory[]
+  schedule        Schedule?
 
   @@index([createdById])
   @@index([customerId])
@@ -193,4 +197,80 @@ model OrderStatusHistory {
   @@index([orderId, changedAt])
   @@index([changedById])
   @@map("order_status_histories")
+}
+
+enum ScheduleSource {
+  ONLINE
+  WALK_IN
+}
+
+enum ScheduleStatus {
+  HELD
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+model Schedule {
+  id         Int            @id @default(autoincrement())
+  customerId Int            @map("customer_id")
+  kapsterId  Int            @map("kapster_id")
+  orderId    Int?           @unique @map("order_id")
+  source     ScheduleSource
+  status     ScheduleStatus @default(HELD)
+
+  startsAt      DateTime  @map("starts_at")
+  endsAt        DateTime  @map("ends_at")
+  blockedUntil  DateTime  @map("blocked_until")
+  holdExpiresAt DateTime? @map("hold_expires_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  kapster  Kapster  @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
+  order    Order?   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  booking Booking? 
+
+  @@index([customerId])
+  @@index([kapsterId, startsAt])
+  @@index([status, holdExpiresAt])
+  @@map("schedules")
+}
+
+
+model Booking {
+  id              Int      @id @default(autoincrement())
+  scheduleId      Int      @unique @map("schedule_id")
+  subtotal        Int
+  discountPercent Int      @default(0) @map("discount_percent")
+  discount        Int      @default(0)
+  total           Int
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  schedule Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  items    BookingItem[]
+
+  @@map("bookings")
+}
+
+model BookingItem {
+  id          Int      @id @default(autoincrement())
+  bookingId   Int      @map("booking_id")
+  serviceId   Int?     @map("service_id")
+  serviceName String   @map("service_name")
+  quantity    Int      @default(1)
+  unitPrice   Int      @map("unit_price")
+  duration    Int
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@unique([bookingId, serviceId])
+  @@index([serviceId])
+  @@map("booking_items")
 }
