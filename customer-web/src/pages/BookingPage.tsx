@@ -849,6 +849,12 @@ export default function BookingPage() {
                       WIB
                     </p>
                   )}
+                  <Link
+                    to="/orders"
+                    className="mt-5 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
+                  >
+                    Lihat pesanan saya
+                  </Link>
 
                   <p className="mt-3 text-sm leading-6 text-muted">
                     Booking belum terkonfirmasi. Fitur pembayaran sedang
