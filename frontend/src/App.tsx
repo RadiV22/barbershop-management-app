@@ -11,6 +11,7 @@ import OrderPage from "./pages/OrderPage";
 import CreateOrderPage from "./pages/CreateOrderPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
+import BookingPage from "./pages/BookingPage";
 
 function App() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ function App() {
           <Route path="/services" element={<ServicePage />} />
           <Route path="/customer" element={<CustomerPage />} />
           <Route path="/kapster" element={<KapsterPage />} />
+          <Route path="/booking" element={<BookingPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/create" element={<CreateOrderPage />} />
           <Route path="/order/history" element={<OrderHistoryPage />} />

@@ -1,4 +1,8 @@
 import type { Prisma } from "../generated/prisma/client.js";
+import {
+  lockActiveKapster,
+  findScheduleConflict,
+} from "../services/schedule.service.js";
 
 export async function lockActiveKapster(
   tx: Prisma.TransactionClient,

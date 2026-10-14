@@ -46,3 +46,13 @@ export const createBookingSchema = z.object({
 
   notes: z.string().trim().max(500, "Catatan maksimal 500 karakter").optional(),
 });
+
+export const bookingParamsSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[1-9]\d*$/, "ID booking harus berupa bilangan bulat positif")
+    .transform(Number)
+    .refine((value) => Number.isSafeInteger(value) && value <= 2147483647, {
+      message: "ID booking berada di luar batas yang diperbolehkan",
+    }),
+});

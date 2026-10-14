@@ -65,6 +65,19 @@ export default function DashboardLayout() {
           </NavLink>
 
           <NavLink
+            to="/booking"
+            className={({ isActive }) =>
+              `block rounded-lg px-4 py-3 transition-colors ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
+              }`
+            }
+          >
+            Booking
+          </NavLink>
+
+          <NavLink
             to="/order"
             end
             className={({ isActive }) =>

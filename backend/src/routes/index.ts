@@ -9,11 +9,13 @@ import { authentication } from "../middlewares/auth.middleware.js";
 import { role } from "../middlewares/role.middleware.js";
 import publicRouter from "./public.route.js";
 import bookingRouter from "./booking.route.js";
+import midtransRouter from "./midtrans.route.js";
 
 const router = Router();
 
 router.use("/auth", authRouter);
 router.use("/public", publicRouter);
+router.use("/midtrans", midtransRouter);
 
 router.use(authentication);
 

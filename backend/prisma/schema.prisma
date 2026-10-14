@@ -21,7 +21,7 @@ model Service {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  orderItems OrderItem[]
+  orderItems   OrderItem[]
   bookingItems BookingItem[]
 
   @@map("services")
@@ -103,6 +103,8 @@ model Payment {
   order        Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
   receivedById Int?  @map("received_by_id")
   receivedBy   User? @relation("PaymentReceiver", fields: [receivedById], references: [id], onDelete: Restrict)
+    bookingPaymentId Int?            @unique @map("booking_payment_id")
+  bookingPayment   BookingPayment? @relation(fields: [bookingPaymentId], references: [id], onDelete: Restrict)
 
   @@index([receivedById])
   @@map("payments")
@@ -180,6 +182,8 @@ model User {
   orderStatusHistories OrderStatusHistory[] @relation("OrderStatusChanger")
   receivedPayments     Payment[]            @relation("PaymentReceiver")
 
+  bookingPaymentReviews BookingPaymentReview[] @relation("BookingPaymentReviewer")
+
   @@map("users")
 }
 
@@ -231,14 +235,13 @@ model Schedule {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Restrict)
   kapster  Kapster  @relation(fields: [kapsterId], references: [id], onDelete: Restrict)
   order    Order?   @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  booking Booking? 
+  booking  Booking?
 
   @@index([customerId])
   @@index([kapsterId, startsAt])
   @@index([status, holdExpiresAt])
   @@map("schedules")
 }
-
 
 model Booking {
   id              Int      @id @default(autoincrement())
@@ -251,8 +254,9 @@ model Booking {
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  schedule Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  schedule Schedule         @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
   items    BookingItem[]
+  payments BookingPayment[]
 
   @@map("bookings")
 }
@@ -273,4 +277,71 @@ model BookingItem {
   @@unique([bookingId, serviceId])
   @@index([serviceId])
   @@map("booking_items")
+}
+
+enum BookingPaymentStatus {
+  CREATED
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  REVIEW
+}
+
+model BookingPayment {
+  id        Int @id @default(autoincrement())
+  bookingId Int @map("booking_id")
+
+  merchantOrderId String  @unique @map("merchant_order_id")
+  transactionId   String? @unique @map("transaction_id")
+
+  amount   Int
+  currency String @default("IDR")
+
+  status BookingPaymentStatus @default(CREATED)
+
+  snapToken   String? @map("snap_token")
+  redirectUrl String? @map("redirect_url")
+
+  paymentType    String? @map("payment_type")
+  providerStatus String? @map("provider_status")
+  fraudStatus    String? @map("fraud_status")
+
+  expiresAt DateTime  @map("expires_at")
+  paidAt    DateTime? @map("paid_at")
+
+  needsReview  Boolean @default(false) @map("needs_review")
+  reviewReason String? @map("review_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+    payment Payment?
+
+    reviews BookingPaymentReview[]
+
+  @@index([bookingId, status])
+  @@index([status, expiresAt])
+  @@map("booking_payments")
+}
+
+
+model BookingPaymentReview {
+  id               Int      @id @default(autoincrement())
+  bookingPaymentId Int      @map("booking_payment_id")
+  reviewedById     Int      @map("reviewed_by_id")
+  reason           String
+  previousReason   String?  @map("previous_reason")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  bookingPayment BookingPayment @relation(fields: [bookingPaymentId], references: [id], onDelete: Restrict)
+  reviewedBy     User           @relation("BookingPaymentReviewer", fields: [reviewedById], references: [id], onDelete: Restrict)
+
+  @@index([bookingPaymentId, createdAt])
+  @@index([reviewedById])
+  @@map("booking_payment_reviews")
 }

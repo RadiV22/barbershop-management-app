@@ -23,41 +23,68 @@ export const getDashboardSummary = async (
 
     const startOfNextDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
-    const [ordersToday, waitingOrders, inServiceOrders, paymentSummary] =
-      await prisma.$transaction([
-        prisma.order.count({
-          where: {
-            createdAt: {
-              gte: startOfDay,
-              lt: startOfNextDay,
-            },
+    const [
+      ordersToday,
+      waitingOrders,
+      inServiceOrders,
+      cashierPaymentSummary,
+      bookingPaymentSummary,
+    ] = await prisma.$transaction([
+      prisma.order.count({
+        where: {
+          createdAt: {
+            gte: startOfDay,
+            lt: startOfNextDay,
           },
-        }),
+        },
+      }),
 
-        prisma.order.count({
-          where: {
-            serviceStatus: "WAITING",
-          },
-        }),
+      prisma.order.count({
+        where: {
+          serviceStatus: "WAITING",
+        },
+      }),
 
-        prisma.order.count({
-          where: {
-            serviceStatus: "IN_SERVICE",
-          },
-        }),
+      prisma.order.count({
+        where: {
+          serviceStatus: "IN_SERVICE",
+        },
+      }),
 
-        prisma.payment.aggregate({
-          where: {
-            paidAt: {
-              gte: startOfDay,
-              lt: startOfNextDay,
-            },
+      // Pembayaran langsung di kasir.
+      // Salinan pembayaran dari booking tidak dihitung di sini.
+      prisma.payment.aggregate({
+        where: {
+          bookingPaymentId: null,
+          paidAt: {
+            gte: startOfDay,
+            lt: startOfNextDay,
           },
-          _sum: {
-            amount: true,
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+
+      // Pembayaran online dihitung dari transaksi booking asalnya.
+      prisma.bookingPayment.aggregate({
+        where: {
+          status: "PAID",
+          currency: "IDR",
+          paidAt: {
+            gte: startOfDay,
+            lt: startOfNextDay,
           },
-        }),
-      ]);
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+    ]);
+
+    const revenueToday =
+      (cashierPaymentSummary._sum.amount ?? 0) +
+      (bookingPaymentSummary._sum.amount ?? 0);
 
     return res.status(200).json({
       message: "Ringkasan dashboard berhasil diambil",
@@ -67,7 +94,7 @@ export const getDashboardSummary = async (
         ordersToday,
         waitingOrders,
         inServiceOrders,
-        revenueToday: paymentSummary._sum.amount ?? 0,
+        revenueToday,
       },
     });
   } catch (error) {
