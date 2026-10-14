@@ -16,6 +16,7 @@ import {
   getTodayWib,
   parseWibDate,
 } from "../utils/schedule.utils.js";
+import { notifyBookingChanged } from "../lib/socket.js";
 
 export const createOrder = async (
   req: Request,
@@ -847,6 +848,9 @@ export const updateOrderStatus = async (
         message: transactionResult.message,
       });
     }
+
+    // Perubahan order dan jadwal sudah berhasil disimpan.
+    notifyBookingChanged(transactionResult.order.customerId);
 
     return res.status(200).json({
       message: transactionResult.warning

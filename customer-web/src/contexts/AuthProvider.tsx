@@ -3,6 +3,7 @@ import axios from "axios";
 import { AuthContext, type CustomerUser } from "./AuthContext";
 import api from "../lib/axios";
 import { getToken, removeToken, saveToken } from "../lib/tokenStorage";
+import { socket } from "../lib/socket";
 
 interface ApiUser {
   id: number;
@@ -30,6 +31,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<CustomerUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [sessionError, setSessionError] = useState("");
+
+  const userId = user?.id;
 
   useEffect(() => {
     let isActive = true;
@@ -94,6 +97,44 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (isInitializing || userId === undefined) {
+      return;
+    }
+
+    function handleConnect() {
+      console.log("Koneksi realtime customer terhubung.");
+    }
+
+    function handleConnectError(error: Error) {
+      console.error("Koneksi realtime belum berhasil:", error.message);
+    }
+
+    function handleSessionExpired() {
+      socket.disconnect();
+
+      removeToken();
+      delete api.defaults.headers.common.Authorization;
+
+      setUser(null);
+      setSessionError("Sesi berakhir. Silakan masuk kembali.");
+    }
+
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("session:expired", handleSessionExpired);
+
+    socket.connect();
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("session:expired", handleSessionExpired);
+
+      socket.disconnect();
+    };
+  }, [userId, isInitializing]);
+
   async function login(email: string, password: string): Promise<void> {
     if (isInitializing) {
       throw new Error("Pemeriksaan sesi masih berlangsung.");
@@ -125,8 +166,11 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   }
 
   function logout(): void {
+    socket.disconnect();
+
     removeToken();
     delete api.defaults.headers.common.Authorization;
+
     setUser(null);
     setSessionError("");
   }

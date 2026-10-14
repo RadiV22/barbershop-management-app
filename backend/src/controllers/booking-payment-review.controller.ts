@@ -10,6 +10,7 @@ import {
   lockActiveKapster,
   findScheduleConflict,
 } from "../services/schedule.service.js";
+import { notifyBookingChanged } from "../lib/socket.js";
 
 export const checkBookingPayment = async (
   req: Request,
@@ -525,6 +526,8 @@ export const confirmBookingPaymentReview = async (
         message: transactionResult.message,
       });
     }
+
+    notifyBookingChanged(payment.booking.schedule.customerId);
 
     return res.status(200).json({
       message:

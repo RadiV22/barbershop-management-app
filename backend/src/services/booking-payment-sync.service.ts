@@ -3,6 +3,7 @@ import { getMidtransTransactionStatus } from "./midtrans-status.service.js";
 import { findScheduleConflict } from "./schedule.service.js";
 import { mapMidtransPaymentStatus } from "../utils/midtrans-payment-status.js";
 import { parseMidtransTime } from "../utils/midtrans-time.utils.js";
+import { notifyBookingChanged } from "../lib/socket.js";
 
 type MidtransStatus = Awaited<ReturnType<typeof getMidtransTransactionStatus>>;
 
@@ -27,7 +28,7 @@ export async function syncBookingPayment(
 
   const kapsterId = initialPayment.booking.schedule.kapsterId;
 
-  return prisma.$transaction(async (tx) => {
+  const syncResult = await prisma.$transaction(async (tx) => {
     // Gunakan kunci kapster yang sama dengan proses pembuatan jadwal.
     const kapsters = await tx.$queryRaw<{ id: number; isActive: boolean }[]>`
       SELECT "id", "is_active" AS "isActive"
@@ -247,4 +248,8 @@ export async function syncBookingPayment(
       needsReview: updatedPayment.needsReview,
     };
   });
+
+  notifyBookingChanged(initialPayment.booking.schedule.customerId);
+
+  return syncResult;
 }

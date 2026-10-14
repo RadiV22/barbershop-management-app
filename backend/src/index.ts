@@ -3,8 +3,11 @@ import cors from "cors";
 import "dotenv/config";
 import router from "./routes/index.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
+import { createServer } from "node:http";
+import { initializeSocket } from "./lib/socket.js";
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -20,6 +23,8 @@ app.get("/", (_request: Request, response: Response) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+initializeSocket(httpServer);
+
+httpServer.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });

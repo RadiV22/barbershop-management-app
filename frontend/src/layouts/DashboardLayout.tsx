@@ -8,7 +8,7 @@ export default function DashboardLayout() {
     <div className="min-h-screen bg-gray-100 text-gray-900 lg:flex">
       <aside className="flex flex-col bg-gray-900 p-6 text-white lg:min-h-screen lg:w-64 lg:shrink-0">
         <div>
-          <h1 className="text-xl font-bold">Barbershop</h1>
+          <h1 className="text-xl font-bold">BarberBro</h1>
           <p className="mt-1 text-sm text-gray-400">Management App</p>
         </div>
 

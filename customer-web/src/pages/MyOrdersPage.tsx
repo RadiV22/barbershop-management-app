@@ -3,6 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import api from "../lib/axios";
+import { socket } from "../lib/socket";
 
 type BookingStatus =
   | "HELD"
@@ -48,6 +49,18 @@ interface BookingResponse {
   data: Booking[];
 }
 
+interface CreateBookingPaymentResponse {
+  message: string;
+  data: {
+    bookingId: number;
+    merchantOrderId: string;
+    amount: number;
+    snapToken: string;
+    redirectUrl: string;
+    expiresAt: string;
+  };
+}
+
 const bookingStatusLabels: Record<BookingStatus, string> = {
   HELD: "Menunggu pembayaran",
   CONFIRMED: "Booking terkonfirmasi",
@@ -69,6 +82,8 @@ export default function MyOrdersPage() {
     "ALL" | "ACTIVE" | "HISTORY"
   >("ALL");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [payingBookingId, setPayingBookingId] = useState<number | null>(null);
+  const [paymentError, setPaymentError] = useState("");
 
   const [bookingsResult, setBookingsResult] = useState<{
     userId: number;
@@ -146,6 +161,79 @@ export default function MyOrdersPage() {
       isActive = false;
     };
   }, [userId, isInitializing, refreshKey]);
+
+  useEffect(() => {
+    if (isInitializing || userId === undefined) return;
+
+    function handleBookingChanged() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    function handleConnect() {
+      // Ambil data terbaru saat koneksi pertama berhasil
+      // maupun setelah tersambung kembali.
+      setRefreshKey((current) => current + 1);
+    }
+
+    socket.on("booking:changed", handleBookingChanged);
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("booking:changed", handleBookingChanged);
+      socket.off("connect", handleConnect);
+    };
+  }, [userId, isInitializing]);
+
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (!event.persisted) return;
+
+      setPayingBookingId(null);
+      setPaymentError("");
+      setRefreshKey((current) => current + 1);
+    }
+
+    window.addEventListener("pageshow", handlePageShow);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, []);
+
+  async function handlePayBooking(bookingId: number) {
+    if (payingBookingId !== null) return;
+
+    setPaymentError("");
+    setPayingBookingId(bookingId);
+
+    try {
+      const response = await api.post<CreateBookingPaymentResponse>(
+        `/booking/${bookingId}/payment`,
+      );
+
+      window.location.assign(response.data.data.redirectUrl);
+    } catch (error) {
+      let message =
+        "Pembayaran belum berhasil disiapkan. Silakan coba kembali.";
+
+      if (axios.isAxiosError<{ message?: string }>(error)) {
+        if (error.response) {
+          message = error.response.data.message || message;
+
+          if (error.response.status === 401) {
+            message = "Sesi login sudah berakhir. Silakan login kembali.";
+          }
+        } else {
+          message =
+            "Respons server belum diterima. Perbarui pesanan sebelum mencoba kembali.";
+        }
+      }
+
+      setPaymentError(message);
+      setPayingBookingId(null);
+    }
+  }
+
   if (isInitializing) {
     return (
       <section className="px-5 py-6">
@@ -193,6 +281,15 @@ export default function MyOrdersPage() {
       >
         {isLoadingBookings ? "Memuat..." : "Perbarui pesanan"}
       </button>
+
+      {paymentError && (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+        >
+          {paymentError}
+        </p>
+      )}
 
       <div
         role="group"
@@ -261,7 +358,13 @@ export default function MyOrdersPage() {
                     Booking #{booking.id}
                   </h2>
 
-                  <span className="rounded-full bg-soft px-3 py-1 text-xs font-semibold text-primary">
+                  <span
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                      booking.displayStatus === "CONFIRMED"
+                        ? "border-green-200 bg-green-100 text-green-800"
+                        : "border-soft bg-soft text-primary"
+                    }`}
+                  >
                     {bookingStatusLabels[booking.displayStatus]}
                   </span>
                 </div>
@@ -364,6 +467,19 @@ export default function MyOrdersPage() {
                       WIB.
                     </p>
                   )}
+
+                {booking.displayStatus === "HELD" && (
+                  <button
+                    type="button"
+                    onClick={() => void handlePayBooking(booking.id)}
+                    disabled={payingBookingId !== null}
+                    className="mt-4 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {payingBookingId === booking.id
+                      ? "Menyiapkan pembayaran..."
+                      : "Bayar sekarang"}
+                  </button>
+                )}
 
                 {booking.displayStatus === "EXPIRED" && (
                   <p className="mt-4 text-sm leading-6 text-muted">

@@ -11,6 +11,10 @@ import {
   lockActiveKapster,
   findScheduleConflict,
 } from "../services/schedule.service.js";
+import {
+  notifyBookingChanged,
+  notifyAvailabilityChanged,
+} from "../lib/socket.js";
 
 export const createBooking = async (
   req: Request,
@@ -390,6 +394,10 @@ export const createBooking = async (
         message: transactionResult.message,
       });
     }
+
+    notifyBookingChanged(transactionResult.booking.schedule.customerId);
+
+    notifyAvailabilityChanged();
 
     return res.status(201).json({
       message:
@@ -903,6 +911,9 @@ export const checkInBooking = async (
         message: transactionResult.message,
       });
     }
+
+    // Check-in dan order sudah berhasil disimpan.
+    notifyBookingChanged(transactionResult.order.customerId);
 
     return res.status(201).json({
       message: "Kedatangan customer berhasil dicatat dan order sudah dibuat.",

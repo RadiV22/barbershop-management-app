@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import api from "../lib/axios";
 import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
+import { socket } from "../lib/socket";
 
 interface Service {
   id: number;
@@ -73,6 +74,7 @@ export default function BookingPage() {
   const [kapsterError, setKapsterError] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedStartsAt, setSelectedStartsAt] = useState("");
+  const [availabilityRefreshKey, setAvailabilityRefreshKey] = useState(0);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingError, setBookingError] = useState("");
@@ -126,7 +128,7 @@ export default function BookingPage() {
     Boolean(selectedDate);
 
   const slotsKey = canLoadSlots
-    ? `${selectedKapsterId}|${selectedDate}|${serviceIdsParam}`
+    ? `${selectedKapsterId}|${selectedDate}|${serviceIdsParam}|${availabilityRefreshKey}`
     : "";
 
   const currentSlotsResult =
@@ -311,6 +313,24 @@ export default function BookingPage() {
     };
   }, [slotsKey, selectedDate, selectedKapsterId, serviceIdsParam]);
 
+  useEffect(() => {
+    function handleAvailabilityChanged() {
+      setAvailabilityRefreshKey((current) => current + 1);
+    }
+
+    function handleConnect() {
+      setAvailabilityRefreshKey((current) => current + 1);
+    }
+
+    socket.on("availability:changed", handleAvailabilityChanged);
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("availability:changed", handleAvailabilityChanged);
+      socket.off("connect", handleConnect);
+    };
+  }, []);
+
   const selectedSlot = availableSlots.find(
     (slot) => slot.startsAt === selectedStartsAt,
   );
@@ -383,6 +403,87 @@ export default function BookingPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (createdBooking) {
+    return (
+      <section className="px-5 py-6">
+        <h1 className="text-2xl font-bold text-primary">Booking</h1>
+
+        <div
+          role="status"
+          className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5"
+        >
+          <h2 className="text-lg font-bold text-green-800">
+            Booking #{createdBooking.id} berhasil dibuat
+          </h2>
+
+          <p className="mt-2 text-sm leading-6 text-green-800">
+            Jadwal ditahan sementara. Lakukan pembayaran sebelum batas waktu
+            agar booking terkonfirmasi.
+          </p>
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-soft bg-white p-5">
+          <h2 className="text-lg font-bold text-primary">Rincian tagihan</h2>
+
+          <dl className="mt-4 space-y-3 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Subtotal</dt>
+              <dd className="font-semibold text-primary">
+                Rp {createdBooking.subtotal.toLocaleString("id-ID")}
+              </dd>
+            </div>
+
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">
+                Diskon membership ({createdBooking.discountPercent}%)
+              </dt>
+              <dd className="font-semibold text-primary">
+                Rp {createdBooking.discount.toLocaleString("id-ID")}
+              </dd>
+            </div>
+
+            <div className="flex justify-between gap-4 border-t border-soft pt-3">
+              <dt className="font-semibold text-primary">Total</dt>
+              <dd className="text-lg font-bold text-primary">
+                Rp {createdBooking.total.toLocaleString("id-ID")}
+              </dd>
+            </div>
+          </dl>
+
+          {createdBooking.schedule.holdExpiresAt && (
+            <p className="mt-5 rounded-xl bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+              Batas pembayaran:{" "}
+              {new Date(createdBooking.schedule.holdExpiresAt).toLocaleString(
+                "id-ID",
+                {
+                  timeZone: "Asia/Jakarta",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                },
+              )}{" "}
+              WIB.
+            </p>
+          )}
+
+          <Link
+            to="/orders"
+            className="mt-5 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
+          >
+            Lihat pesanan saya
+          </Link>
+
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Lanjutkan pembayaran melalui tombol Bayar di halaman Pesanan saya.
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -813,55 +914,6 @@ export default function BookingPage() {
                 >
                   {isSubmitting ? "Membuat booking..." : "Buat booking"}
                 </button>
-              )}
-
-              {createdBooking && (
-                <div
-                  role="status"
-                  className="mt-5 rounded-xl border border-soft bg-background p-4"
-                >
-                  <h3 className="font-bold text-primary">
-                    Booking #{createdBooking.id} berhasil dibuat
-                  </h3>
-
-                  <p className="mt-2 text-sm text-muted">
-                    Subtotal: Rp{" "}
-                    {createdBooking.subtotal.toLocaleString("id-ID")}
-                  </p>
-
-                  <p className="mt-2 text-sm text-muted">
-                    Diskon membership ({createdBooking.discountPercent}%): Rp{" "}
-                    {createdBooking.discount.toLocaleString("id-ID")}
-                  </p>
-
-                  <p className="mt-3 font-bold text-primary">
-                    Total: Rp {createdBooking.total.toLocaleString("id-ID")}
-                  </p>
-
-                  {createdBooking.schedule.holdExpiresAt && (
-                    <p className="mt-3 text-sm text-muted">
-                      Batas pembayaran:{" "}
-                      {new Date(
-                        createdBooking.schedule.holdExpiresAt,
-                      ).toLocaleString("id-ID", {
-                        timeZone: "Asia/Jakarta",
-                      })}{" "}
-                      WIB
-                    </p>
-                  )}
-                  <Link
-                    to="/orders"
-                    className="mt-5 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
-                  >
-                    Lihat pesanan saya
-                  </Link>
-
-                  <p className="mt-3 text-sm leading-6 text-muted">
-                    Booking belum terkonfirmasi. Fitur pembayaran sedang
-                    disiapkan; jadwal akan dilepas jika batas pembayaran
-                    terlewati.
-                  </p>
-                </div>
               )}
             </div>
           </div>

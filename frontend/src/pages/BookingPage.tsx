@@ -3,6 +3,7 @@ import axios from "axios";
 import api from "../lib/axios";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { socket } from "../lib/socket";
 
 type BookingStatus =
   | "HELD"
@@ -202,8 +203,32 @@ export default function BookingPage() {
     };
   }, [refreshKey]);
 
+  useEffect(() => {
+    function handleBookingChanged() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    function handleConnect() {
+      // Ambil data terbaru setelah koneksi tersambung.
+      setRefreshKey((current) => current + 1);
+    }
+
+    socket.on("booking:changed", handleBookingChanged);
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("booking:changed", handleBookingChanged);
+      socket.off("connect", handleConnect);
+    };
+  }, []);
+
   async function handleCheckIn(bookingId: number) {
-    if (checkingInId !== null || checkingPaymentId !== null || isLoading) {
+    if (
+      checkingInId !== null ||
+      checkingPaymentId !== null ||
+      isLoading ||
+      isSubmittingReview
+    ) {
       return;
     }
 
@@ -267,7 +292,12 @@ export default function BookingPage() {
   });
 
   function handleRefreshBookings() {
-    if (isLoading || checkingInId !== null || checkingPaymentId !== null) {
+    if (
+      checkingInId !== null ||
+      checkingPaymentId !== null ||
+      isLoading ||
+      isSubmittingReview
+    ) {
       return;
     }
 
