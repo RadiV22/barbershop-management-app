@@ -234,10 +234,32 @@ export default function MyOrdersPage() {
     }
   }
 
+  useEffect(() => {
+    if (isInitializing || userId === undefined) return;
+
+    function refreshBookings() {
+      if (document.visibilityState !== "visible") return;
+
+      setRefreshKey((current) => current + 1);
+    }
+
+    const intervalId = window.setInterval(refreshBookings, 30_000);
+
+    document.addEventListener("visibilitychange", refreshBookings);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshBookings);
+    };
+  }, [userId, isInitializing]);
+
   if (isInitializing) {
     return (
-      <section className="px-5 py-6">
-        <p role="status" className="text-sm text-muted">
+      <section className="px-5 py-6 sm:px-8 sm:py-8">
+        <p
+          role="status"
+          className="rounded-2xl border border-soft bg-white p-5 text-sm text-muted"
+        >
           Memeriksa sesi...
         </p>
       </section>
@@ -246,17 +268,34 @@ export default function MyOrdersPage() {
 
   if (!user) {
     return (
-      <section className="px-5 py-6">
-        <h1 className="text-2xl font-bold text-primary">Pesanan saya</h1>
+      <section className="px-5 py-6 sm:px-8 sm:py-8">
+        <header className="rounded-[2rem] bg-peach-light p-6 sm:p-8">
+          <p className="text-xs font-bold tracking-[0.16em] text-primary">
+            KUNJUNGANMU
+          </p>
 
-        <div className="mt-5 rounded-2xl border border-soft bg-white p-5">
-          <p className="text-sm leading-6 text-muted">
-            Masuk terlebih dahulu untuk melihat booking dan riwayat kunjunganmu.
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary">
+            Pesanan saya
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Semua rencana perawatanmu dalam satu tempat.
+          </p>
+        </header>
+
+        <div className="mt-6 rounded-3xl border border-soft bg-white p-6">
+          <h2 className="text-lg font-bold text-primary">
+            Masuk untuk melihat pesanan
+          </h2>
+
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Lihat booking, lanjutkan pembayaran, dan pantau riwayat kunjunganmu
+            melalui akun customer.
           </p>
 
           <Link
             to="/login"
-            className="mt-4 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
+            className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
           >
             Masuk ke akun
           </Link>
@@ -266,26 +305,39 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <section className="px-5 py-6">
-      <h1 className="text-2xl font-bold text-primary">Pesanan saya</h1>
+    <section className="px-5 py-6 sm:px-8 sm:py-8">
+      <header className="rounded-[2rem] bg-peach-light p-6 sm:p-8">
+        <p className="text-xs font-bold tracking-[0.16em] text-primary">
+          KUNJUNGANMU
+        </p>
 
-      <p className="mt-2 text-sm leading-6 text-muted">
-        Pantau booking aktif dan lihat riwayat kunjunganmu.
-      </p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary">
+          Pesanan saya
+        </h1>
 
-      <button
-        type="button"
-        onClick={() => setRefreshKey((current) => current + 1)}
-        disabled={isLoadingBookings}
-        className="mt-4 min-h-11 rounded-xl border border-soft bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {isLoadingBookings ? "Memuat..." : "Perbarui pesanan"}
-      </button>
+        <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
+          Pantau booking aktif, lanjutkan pembayaran, dan lihat riwayat
+          kunjunganmu.
+        </p>
+      </header>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-primary">Daftar booking</h2>
+
+        <button
+          type="button"
+          onClick={() => setRefreshKey((current) => current + 1)}
+          disabled={isLoadingBookings}
+          className="min-h-11 rounded-full border border-soft bg-white px-4 py-2 text-xs font-semibold text-primary transition-colors hover:bg-peach-light disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isLoadingBookings ? "Memuat..." : "Perbarui pesanan"}
+        </button>
+      </div>
 
       {paymentError && (
         <p
           role="alert"
-          className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700"
         >
           {paymentError}
         </p>
@@ -294,7 +346,7 @@ export default function MyOrdersPage() {
       <div
         role="group"
         aria-label="Filter booking"
-        className="mt-5 flex flex-wrap gap-2"
+        className="mt-4 flex flex-wrap gap-2"
       >
         {bookingFilterOptions.map((option) => (
           <button
@@ -302,10 +354,10 @@ export default function MyOrdersPage() {
             type="button"
             onClick={() => setBookingFilter(option.value)}
             aria-pressed={bookingFilter === option.value}
-            className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold ${
+            className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
               bookingFilter === option.value
                 ? "border-primary bg-primary text-white"
-                : "border-soft bg-white text-muted hover:bg-soft/30"
+                : "border-soft bg-white text-muted hover:bg-peach-light"
             }`}
           >
             {option.label}
@@ -314,7 +366,10 @@ export default function MyOrdersPage() {
       </div>
 
       {isLoadingBookings && (
-        <p role="status" className="mt-5 text-sm text-muted">
+        <p
+          role="status"
+          className="mt-5 rounded-2xl border border-soft bg-white p-5 text-sm text-muted"
+        >
           Memuat booking...
         </p>
       )}
@@ -322,19 +377,25 @@ export default function MyOrdersPage() {
       {!isLoadingBookings && errorMessage && (
         <p
           role="alert"
-          className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+          className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700"
         >
           {errorMessage}
         </p>
       )}
 
       {!isLoadingBookings && !errorMessage && (
-        <div className="mt-5 space-y-4">
+        <div className="mt-5 space-y-5">
           {filteredBookings.length === 0 ? (
-            <div className="rounded-2xl border border-soft bg-white p-5">
-              <p className="text-center text-sm text-muted">
+            <div className="rounded-3xl border border-soft bg-white p-6 text-center">
+              <h3 className="text-lg font-bold text-primary">
                 {bookings.length === 0
-                  ? "Kamu belum memiliki booking."
+                  ? "Belum ada kunjungan"
+                  : "Belum ada booking pada kategori ini"}
+              </h3>
+
+              <p className="mt-3 text-sm leading-6 text-muted">
+                {bookings.length === 0
+                  ? "Pilih perawatan favoritmu untuk membuat booking pertama."
                   : bookingFilter === "ACTIVE"
                     ? "Belum ada booking aktif."
                     : "Belum ada riwayat booking."}
@@ -342,7 +403,7 @@ export default function MyOrdersPage() {
 
               <Link
                 to="/services"
-                className="mt-4 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
+                className="mt-5 flex min-h-12 items-center justify-center rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
               >
                 Pilih layanan
               </Link>
@@ -351,142 +412,183 @@ export default function MyOrdersPage() {
             filteredBookings.map((booking) => (
               <article
                 key={booking.id}
-                className="rounded-2xl border border-soft bg-white p-5"
+                className="overflow-hidden rounded-3xl border border-soft bg-white"
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-lg font-bold text-primary">
-                    Booking #{booking.id}
-                  </h2>
+                <div className="p-5 sm:p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="text-lg font-bold text-primary">
+                      Booking #{booking.id}
+                    </h3>
 
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
-                      booking.displayStatus === "CONFIRMED"
-                        ? "border-green-200 bg-green-100 text-green-800"
-                        : "border-soft bg-soft text-primary"
-                    }`}
-                  >
-                    {bookingStatusLabels[booking.displayStatus]}
-                  </span>
-                </div>
-
-                <p className="mt-4 text-sm font-semibold text-primary">
-                  {new Date(booking.schedule.startsAt).toLocaleString("id-ID", {
-                    timeZone: "Asia/Jakarta",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  WIB
-                </p>
-
-                <p className="mt-2 text-sm text-muted">
-                  Kapster: {booking.schedule.kapster.name}
-                </p>
-
-                <div className="mt-4 border-t border-soft pt-4">
-                  {booking.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="mb-2 flex items-start justify-between gap-4"
+                    <span
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                        booking.displayStatus === "CONFIRMED"
+                          ? "border-green-200 bg-green-50 text-green-800"
+                          : booking.displayStatus === "HELD"
+                            ? "border-amber-200 bg-amber-50 text-amber-800"
+                            : booking.displayStatus === "COMPLETED"
+                              ? "border-teal-200 bg-teal-50 text-teal-800"
+                              : "border-gray-200 bg-gray-100 text-gray-700"
+                      }`}
                     >
-                      <p className="text-sm text-muted">
-                        {item.serviceName} × {item.quantity}
-                      </p>
-
-                      <p className="shrink-0 text-sm font-semibold text-primary">
-                        Rp{" "}
-                        {(item.unitPrice * item.quantity).toLocaleString(
-                          "id-ID",
-                        )}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 space-y-2 border-t border-soft pt-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="text-sm text-muted">Subtotal</p>
-
-                    <p className="text-sm text-primary">
-                      Rp {booking.subtotal.toLocaleString("id-ID")}
-                    </p>
+                      {bookingStatusLabels[booking.displayStatus]}
+                    </span>
                   </div>
 
-                  {booking.discountPercent > 0 && (
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-sm text-muted">
-                        Diskon membership ({booking.discountPercent}%)
-                      </p>
-
-                      <p className="text-sm font-semibold text-green-700">
-                        − Rp {booking.discount.toLocaleString("id-ID")}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-4 pt-2">
-                    <p className="text-sm font-semibold text-primary">
-                      Total tagihan
+                  <div className="mt-5 rounded-2xl bg-sage-light p-4">
+                    <p className="text-xs font-semibold tracking-wide text-muted">
+                      JADWAL KUNJUNGAN
                     </p>
 
-                    <p className="text-lg font-bold text-primary">
-                      Rp {booking.total.toLocaleString("id-ID")}
-                    </p>
-                  </div>
-                </div>
-
-                {booking.notes?.trim() && (
-                  <div className="mt-4 rounded-xl bg-soft/30 p-3">
-                    <p className="text-sm font-semibold text-primary">
-                      Catatan kamu
-                    </p>
-
-                    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
-                      {booking.notes}
-                    </p>
-                  </div>
-                )}
-
-                {booking.displayStatus === "HELD" &&
-                  booking.schedule.holdExpiresAt && (
-                    <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm leading-6 text-amber-800">
-                      Batas pembayaran:{" "}
-                      {new Date(booking.schedule.holdExpiresAt).toLocaleString(
+                    <p className="mt-2 text-base font-bold leading-6 text-primary">
+                      {new Date(booking.schedule.startsAt).toLocaleDateString(
                         "id-ID",
                         {
                           timeZone: "Asia/Jakarta",
                           day: "numeric",
                           month: "long",
                           year: "numeric",
+                        },
+                      )}
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-primary">
+                      Pukul{" "}
+                      {new Date(booking.schedule.startsAt).toLocaleTimeString(
+                        "id-ID",
+                        {
+                          timeZone: "Asia/Jakarta",
                           hour: "2-digit",
                           minute: "2-digit",
+                          hour12: false,
                         },
                       )}{" "}
-                      WIB.
+                      WIB
                     </p>
+
+                    <p className="mt-3 break-words border-t border-accent/25 pt-3 text-sm text-muted">
+                      Kapster:{" "}
+                      <span className="font-semibold text-primary">
+                        {booking.schedule.kapster.name}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="mt-5">
+                    <h4 className="text-sm font-semibold text-primary">
+                      Layanan yang dipesan
+                    </h4>
+
+                    <ul className="mt-3 space-y-3">
+                      {booking.items.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex items-start justify-between gap-4"
+                        >
+                          <p className="min-w-0 break-words text-sm leading-6 text-muted">
+                            {item.serviceName} × {item.quantity}
+                          </p>
+
+                          <p className="shrink-0 text-sm font-semibold leading-6 text-primary">
+                            Rp{" "}
+                            {(item.unitPrice * item.quantity).toLocaleString(
+                              "id-ID",
+                            )}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl bg-peach-light p-4">
+                    <dl className="space-y-3">
+                      <div className="flex justify-between gap-4 text-sm">
+                        <dt className="text-muted">Subtotal</dt>
+                        <dd className="shrink-0 text-primary">
+                          Rp {booking.subtotal.toLocaleString("id-ID")}
+                        </dd>
+                      </div>
+
+                      {booking.discountPercent > 0 && (
+                        <div className="flex items-start justify-between gap-4 text-sm">
+                          <dt className="text-muted">
+                            Diskon membership ({booking.discountPercent}%)
+                          </dt>
+
+                          <dd className="shrink-0 font-semibold text-green-800">
+                            − Rp {booking.discount.toLocaleString("id-ID")}
+                          </dd>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-secondary/20 pt-3">
+                        <dt className="text-sm font-semibold text-primary">
+                          Total tagihan
+                        </dt>
+
+                        <dd className="text-xl font-bold text-primary">
+                          Rp {booking.total.toLocaleString("id-ID")}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  {booking.notes?.trim() && (
+                    <div className="mt-4 rounded-2xl border border-soft p-4">
+                      <h4 className="text-sm font-semibold text-primary">
+                        Catatan kamu
+                      </h4>
+
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
+                        {booking.notes}
+                      </p>
+                    </div>
                   )}
 
-                {booking.displayStatus === "HELD" && (
-                  <button
-                    type="button"
-                    onClick={() => void handlePayBooking(booking.id)}
-                    disabled={payingBookingId !== null}
-                    className="mt-4 min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {payingBookingId === booking.id
-                      ? "Menyiapkan pembayaran..."
-                      : "Bayar sekarang"}
-                  </button>
-                )}
+                  {booking.displayStatus === "HELD" &&
+                    booking.schedule.holdExpiresAt && (
+                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                        <p className="text-sm font-semibold">
+                          Selesaikan pembayaran sebelum
+                        </p>
 
-                {booking.displayStatus === "EXPIRED" && (
-                  <p className="mt-4 text-sm leading-6 text-muted">
-                    Batas pembayaran sudah lewat. Silakan buat booking baru
-                    dengan memilih jadwal yang tersedia.
-                  </p>
-                )}
+                        <p className="mt-1 text-sm leading-6">
+                          {new Date(
+                            booking.schedule.holdExpiresAt,
+                          ).toLocaleString("id-ID", {
+                            timeZone: "Asia/Jakarta",
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          })}{" "}
+                          WIB
+                        </p>
+                      </div>
+                    )}
+
+                  {booking.displayStatus === "HELD" && (
+                    <button
+                      type="button"
+                      onClick={() => void handlePayBooking(booking.id)}
+                      disabled={payingBookingId !== null}
+                      className="mt-4 min-h-12 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {payingBookingId === booking.id
+                        ? "Menyiapkan pembayaran..."
+                        : "Bayar sekarang"}
+                    </button>
+                  )}
+
+                  {booking.displayStatus === "EXPIRED" && (
+                    <p className="mt-4 rounded-2xl bg-background p-4 text-sm leading-6 text-muted">
+                      Batas pembayaran sudah lewat. Silakan buat booking baru
+                      dengan memilih jadwal yang tersedia.
+                    </p>
+                  )}
+                </div>
               </article>
             ))
           )}

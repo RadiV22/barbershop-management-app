@@ -26,7 +26,7 @@ export default function RegisterPage() {
     : "/account";
 
   const inputClassName =
-    "w-full rounded-xl border border-soft px-4 py-3 text-base text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+    "min-h-12 w-full rounded-2xl border border-soft bg-background px-4 py-3 text-base text-primary outline-none placeholder:text-muted/70 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60";
 
   async function handleRegister() {
     if (isSubmitting || isRegistered) return;
@@ -103,10 +103,15 @@ export default function RegisterPage() {
 
   if (isInitializing) {
     return (
-      <section className="px-5 py-8">
-        <p role="status" className="text-sm text-gray-600">
-          Memeriksa sesi...
-        </p>
+      <section className="min-h-dvh bg-background px-5 py-8">
+        <div className="mx-auto max-w-md">
+          <p
+            role="status"
+            className="rounded-2xl border border-soft bg-white p-5 text-sm text-muted"
+          >
+            Memeriksa sesi...
+          </p>
+        </div>
       </section>
     );
   }
@@ -117,211 +122,222 @@ export default function RegisterPage() {
 
   if (isRegistered) {
     return (
-      <section className="px-5 py-8">
-        <div className="mx-auto max-w-md rounded-3xl border border-soft bg-white p-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Pendaftaran berhasil
-          </h1>
+      <section className="min-h-dvh bg-background px-5 py-8 sm:py-12">
+        <div className="mx-auto max-w-md overflow-hidden rounded-[2rem] border border-soft bg-white">
+          <header className="bg-peach-light p-6 sm:p-8">
+            <p className="text-xs font-bold tracking-[0.18em] text-primary">
+              BARBERBRO
+            </p>
 
-          <p role="status" className="mt-3 text-sm leading-6 text-gray-600">
-            Akun customer kamu sudah dibuat. Silakan masuk menggunakan email dan
-            password yang didaftarkan.
-          </p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary">
+              Akunmu sudah siap.
+            </h1>
+          </header>
 
-          <Link
-            to={loginPath}
-            className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
-          >
-            Masuk sekarang
-          </Link>
+          <div className="p-6 sm:p-8">
+            <div
+              role="status"
+              className="rounded-2xl border border-green-200 bg-green-50 p-4"
+            >
+              <h2 className="font-bold text-green-800">Pendaftaran berhasil</h2>
+
+              <p className="mt-2 text-sm leading-6 text-green-800">
+                Akun customer kamu sudah dibuat. Silakan masuk menggunakan email
+                dan password yang didaftarkan.
+              </p>
+            </div>
+
+            <Link
+              to={loginPath}
+              className="mt-6 flex min-h-12 items-center justify-center rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
+            >
+              Masuk sekarang
+            </Link>
+          </div>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="px-5 py-8">
-      <p role="status" className="text-sm text-gray-600">
-        Memeriksa sesi...
-      </p>
-      <div className="mx-auto max-w-md rounded-3xl border border-soft bg-white p-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Pendaftaran berhasil
-        </h1>
-
-        <p role="status" className="mt-3 text-sm leading-6 text-gray-600">
-          Akun customer kamu sudah dibuat. Silakan masuk menggunakan email dan
-          password yang didaftarkan.
-        </p>
-
+    <section className="min-h-dvh bg-background px-5 py-8 sm:py-12">
+      <div className="mx-auto max-w-md">
         <Link
           to={loginPath}
-          className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
         >
-          Masuk sekarang
-        </Link>
-      </div>
-      <div className="mx-auto max-w-md">
-        <Link to={loginPath} className="text-sm font-semibold text-primary">
           ← Kembali ke login
         </Link>
 
-        <div className="mt-6 rounded-3xl border border-soft bg-white p-6">
-          <p className="text-sm font-semibold text-primary">Barbershop</p>
+        <div className="mt-5 overflow-hidden rounded-[2rem] border border-soft bg-white">
+          <header className="bg-peach-light p-6 sm:p-8">
+            <p className="text-xs font-bold tracking-[0.18em] text-primary">
+              BARBERBRO
+            </p>
 
-          <h1 className="mt-2 text-2xl font-bold text-gray-900">
-            Buat akun customer
-          </h1>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-primary">
+              Mulai kunjunganmu.
+            </h1>
 
-          <p className="mt-3 text-sm leading-6 text-gray-500">
-            Daftar untuk membuat booking dan melihat riwayat kunjunganmu.
-          </p>
+            <p className="mt-3 text-sm leading-6 text-muted">
+              Buat akun untuk memilih jadwal, melakukan pembayaran, dan melihat
+              pesananmu.
+            </p>
+          </header>
 
-          <form
-            className="mt-6 space-y-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleRegister();
-            }}
-          >
-            <div>
-              <label
-                htmlFor="name"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Nama
-              </label>
-
-              <input
-                id="name"
-                type="text"
-                disabled={isSubmitting}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                autoComplete="name"
-                placeholder="Masukkan nama"
-                required
-                className={inputClassName}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Email
-              </label>
-
-              <input
-                id="email"
-                type="email"
-                disabled={isSubmitting}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                placeholder="nama@email.com"
-                required
-                className={inputClassName}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="phone"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Nomor telepon
-              </label>
-
-              <input
-                id="phone"
-                type="tel"
-                disabled={isSubmitting}
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                autoComplete="tel"
-                placeholder="081234567890"
-                aria-describedby="phone-help"
-                required
-                className={inputClassName}
-              />
-
-              <p id="phone-help" className="mt-2 text-xs text-gray-500">
-                Gunakan awalan 08 atau +628, tanpa spasi dan tanda hubung.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Password
-              </label>
-
-              <input
-                id="password"
-                type="password"
-                disabled={isSubmitting}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                autoComplete="new-password"
-                placeholder="Minimal 8 karakter"
-                minLength={8}
-                required
-                className={inputClassName}
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="mb-2 block text-sm font-semibold text-gray-700"
-              >
-                Konfirmasi password
-              </label>
-
-              <input
-                id="confirmPassword"
-                type="password"
-                disabled={isSubmitting}
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                autoComplete="new-password"
-                placeholder="Ulangi password"
-                minLength={8}
-                required
-                className={inputClassName}
-              />
-            </div>
-
-            {errorMessage && (
-              <p
-                role="alert"
-                className="rounded-xl bg-red-50 p-3 text-sm text-red-700"
-              >
-                {errorMessage}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="min-h-12 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          <div className="p-6 sm:p-8">
+            <form
+              className="space-y-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleRegister();
+              }}
             >
-              {isSubmitting ? "Mendaftarkan..." : "Daftar"}
-            </button>
-          </form>
+              <div>
+                <label
+                  htmlFor="name"
+                  className="mb-2 block text-sm font-semibold text-primary"
+                >
+                  Nama
+                </label>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Sudah punya akun?{" "}
-            <Link to={loginPath} className="font-semibold text-primary">
-              Masuk
-            </Link>
-          </p>
+                <input
+                  id="name"
+                  type="text"
+                  disabled={isSubmitting}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  autoComplete="name"
+                  placeholder="Masukkan nama"
+                  required
+                  className={inputClassName}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-semibold text-primary"
+                >
+                  Email
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  disabled={isSubmitting}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  placeholder="nama@email.com"
+                  required
+                  className={inputClassName}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="mb-2 block text-sm font-semibold text-primary"
+                >
+                  Nomor telepon
+                </label>
+
+                <input
+                  id="phone"
+                  type="tel"
+                  disabled={isSubmitting}
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  autoComplete="tel"
+                  placeholder="081234567890"
+                  aria-describedby="phone-help"
+                  required
+                  className={inputClassName}
+                />
+
+                <p
+                  id="phone-help"
+                  className="mt-2 text-xs leading-5 text-muted"
+                >
+                  Gunakan awalan 08 atau +628, tanpa spasi dan tanda hubung.
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-semibold text-primary"
+                >
+                  Password
+                </label>
+
+                <input
+                  id="password"
+                  type="password"
+                  disabled={isSubmitting}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Minimal 8 karakter"
+                  minLength={8}
+                  required
+                  className={inputClassName}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="mb-2 block text-sm font-semibold text-primary"
+                >
+                  Konfirmasi password
+                </label>
+
+                <input
+                  id="confirmPassword"
+                  type="password"
+                  disabled={isSubmitting}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Ulangi password"
+                  minLength={8}
+                  required
+                  className={inputClassName}
+                />
+              </div>
+
+              {errorMessage && (
+                <p
+                  role="alert"
+                  className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700"
+                >
+                  {errorMessage}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="min-h-12 w-full rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? "Mendaftarkan..." : "Buat akun"}
+              </button>
+            </form>
+
+            <p className="mt-6 border-t border-soft pt-5 text-center text-sm leading-6 text-muted">
+              Sudah punya akun?{" "}
+              <Link
+                to={loginPath}
+                className="font-semibold text-primary underline underline-offset-4"
+              >
+                Masuk
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { createPaymentSchema } from "../schemas/payment.schema.js";
+import { notifyOrdersChanged } from "../lib/socket.js";
 
 export const createPayment = async (
   req: Request,
@@ -120,6 +121,8 @@ export const createPayment = async (
 
       return newPayment;
     });
+
+    notifyOrdersChanged();
 
     return res.status(201).json({
       message: "Pembayaran berhasil dicatat",

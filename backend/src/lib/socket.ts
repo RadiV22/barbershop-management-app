@@ -84,3 +84,12 @@ export function notifyAvailabilityChanged() {
   // Tidak mengirim identitas customer atau rincian booking.
   io.emit("availability:changed");
 }
+
+export function notifyOrdersChanged() {
+  if (!io) {
+    console.error("Event order tidak dikirim: Socket.IO belum siap.");
+    return;
+  }
+
+  io.to("management").emit("orders:changed");
+}

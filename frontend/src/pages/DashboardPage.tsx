@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import api from "../lib/axios";
+import { socket } from "../lib/socket";
 
 interface DashboardSummary {
   date: string;
@@ -20,6 +21,7 @@ function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -30,6 +32,7 @@ function DashboardPage() {
 
         if (!ignore) {
           setSummary(response.data.data);
+          setErrorMessage("");
         }
       } catch (error) {
         if (ignore) return;
@@ -54,6 +57,26 @@ function DashboardPage() {
 
     return () => {
       ignore = true;
+    };
+  }, [refreshKey]);
+
+  useEffect(() => {
+    function handleSummaryChanged() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    function handleConnect() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    socket.on("orders:changed", handleSummaryChanged);
+    socket.on("booking:changed", handleSummaryChanged);
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("orders:changed", handleSummaryChanged);
+      socket.off("booking:changed", handleSummaryChanged);
+      socket.off("connect", handleConnect);
     };
   }, []);
 

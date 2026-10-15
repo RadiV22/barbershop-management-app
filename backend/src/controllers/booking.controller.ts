@@ -14,6 +14,7 @@ import {
 import {
   notifyBookingChanged,
   notifyAvailabilityChanged,
+  notifyOrdersChanged,
 } from "../lib/socket.js";
 
 export const createBooking = async (
@@ -914,6 +915,7 @@ export const checkInBooking = async (
 
     // Check-in dan order sudah berhasil disimpan.
     notifyBookingChanged(transactionResult.order.customerId);
+    notifyOrdersChanged();
 
     return res.status(201).json({
       message: "Kedatangan customer berhasil dicatat dan order sudah dibuat.",

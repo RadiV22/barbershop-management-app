@@ -16,7 +16,11 @@ import {
   getTodayWib,
   parseWibDate,
 } from "../utils/schedule.utils.js";
-import { notifyBookingChanged } from "../lib/socket.js";
+import {
+  notifyBookingChanged,
+  notifyAvailabilityChanged,
+  notifyOrdersChanged,
+} from "../lib/socket.js";
 
 export const createOrder = async (
   req: Request,
@@ -201,7 +205,7 @@ export const createOrder = async (
             success: false as const,
             statusCode: 409,
             message:
-              "Order langsung harus berada dalam jam operasional 10.00–21.00 WIB, termasuk durasi layanan dan buffer.",
+              "Order langsung harus berada dalam jam operasional, termasuk durasi layanan dan buffer.",
           };
         }
 
@@ -311,6 +315,9 @@ export const createOrder = async (
         message: transactionResult.message,
       });
     }
+
+    notifyAvailabilityChanged();
+    notifyOrdersChanged();
 
     return res.status(201).json({
       message: "Order berhasil dibuat",
@@ -851,6 +858,8 @@ export const updateOrderStatus = async (
 
     // Perubahan order dan jadwal sudah berhasil disimpan.
     notifyBookingChanged(transactionResult.order.customerId);
+    notifyAvailabilityChanged();
+    notifyOrdersChanged();
 
     return res.status(200).json({
       message: transactionResult.warning
@@ -1082,6 +1091,9 @@ export const deleteOrder = async (
           "Order dari booking online tidak dapat dihapus melalui fitur ini.",
       });
     }
+
+    notifyAvailabilityChanged();
+    notifyOrdersChanged();
 
     return res.status(200).json({
       message:

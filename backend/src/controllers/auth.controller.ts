@@ -130,7 +130,7 @@ export const login = async (
       jwtSecret,
       {
         algorithm: "HS256",
-        expiresIn: "1h",
+        expiresIn: "24h",
       },
     );
 

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -12,6 +12,12 @@ import CreateOrderPage from "./pages/CreateOrderPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import BookingPage from "./pages/BookingPage";
+
+function OrderDetailRoute() {
+  const { id } = useParams();
+
+  return <OrderDetailPage key={id} />;
+}
 
 function App() {
   const { user } = useAuth();
@@ -33,7 +39,7 @@ function App() {
           <Route path="/order" element={<OrderPage />} />
           <Route path="/order/create" element={<CreateOrderPage />} />
           <Route path="/order/history" element={<OrderHistoryPage />} />
-          <Route path="/order/:id" element={<OrderDetailPage />} />
+          <Route path="/order/:id" element={<OrderDetailRoute />} />
         </Route>
       </Route>
 

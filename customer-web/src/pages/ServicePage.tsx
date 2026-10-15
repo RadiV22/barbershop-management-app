@@ -79,17 +79,26 @@ export default function ServicePage() {
   );
 
   return (
-    <section className="px-5 py-6">
-      <h1 className="text-2xl font-bold text-gray-900">Layanan</h1>
+    <section className="px-5 py-6 sm:px-8 sm:py-8">
+      <header className="rounded-[2rem] bg-peach-light p-6 sm:p-8">
+        <p className="text-xs font-bold tracking-[0.16em] text-primary">
+          PERAWATAN UNTUKMU
+        </p>
 
-      <p className="mt-2 text-sm leading-6 text-gray-600">
-        Temukan layanan yang sesuai untuk kebutuhanmu.
-      </p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary">
+          Pilih layananmu.
+        </h1>
 
-      <div className="mt-5">
+        <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
+          Pilih satu atau beberapa layanan, lalu tentukan kapster dan waktu
+          kunjungan yang cocok.
+        </p>
+      </header>
+
+      <div className="mt-6">
         <label
           htmlFor="service-search"
-          className="mb-2 block text-sm font-semibold text-muted"
+          className="mb-2 block text-sm font-semibold text-primary"
         >
           Cari layanan
         </label>
@@ -101,12 +110,15 @@ export default function ServicePage() {
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cari nama layanan..."
           autoComplete="off"
-          className="w-full rounded-xl border border-soft bg-white px-4 py-3 text-base text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          className="min-h-12 w-full rounded-2xl border border-soft bg-white px-4 py-3 text-base text-primary outline-none placeholder:text-muted/70 focus:border-primary focus:ring-2 focus:ring-primary/15"
         />
       </div>
 
       {isLoading && (
-        <p role="status" className="mt-6 text-sm text-gray-600">
+        <p
+          role="status"
+          className="mt-6 rounded-2xl border border-soft bg-white p-5 text-sm text-muted"
+        >
           Memuat layanan...
         </p>
       )}
@@ -114,15 +126,15 @@ export default function ServicePage() {
       {!isLoading && errorMessage && (
         <p
           role="alert"
-          className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+          className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
         >
           {errorMessage}
         </p>
       )}
 
       {!isLoading && !errorMessage && filteredServices.length === 0 && (
-        <div className="mt-5 rounded-2xl border border-soft bg-white p-5">
-          <p className="text-center text-sm text-muted">
+        <div className="mt-6 rounded-2xl border border-soft bg-white px-5 py-8">
+          <p className="text-center text-sm leading-6 text-muted">
             {keyword
               ? "Tidak ada layanan yang sesuai pencarian."
               : "Belum ada layanan yang tersedia."}
@@ -131,100 +143,163 @@ export default function ServicePage() {
       )}
 
       {!isLoading && !errorMessage && filteredServices.length > 0 && (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {filteredServices.map((service) => (
-            <article
-              key={service.id}
-              className="rounded-2xl border border-soft bg-white p-5"
-            >
-              <h2 className="text-lg font-bold text-gray-900">
-                {service.name}
-              </h2>
+        <>
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-primary">Daftar layanan</h2>
 
-              <p className="mt-2 text-sm text-gray-500">
-                Durasi: {service.duration} menit
-              </p>
+            <span className="rounded-full bg-sage-light px-3 py-1 text-xs font-semibold text-primary">
+              {filteredServices.length} layanan
+            </span>
+          </div>
 
-              <p className="mt-4 text-lg font-bold text-primary">
-                Rp {service.price.toLocaleString("id-ID")}
-              </p>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {filteredServices.map((service) => {
+              const isSelected = selectedServiceIds.includes(service.id);
 
-              <button
-                type="button"
-                onClick={() => handleToggleService(service.id)}
-                aria-pressed={selectedServiceIds.includes(service.id)}
-                aria-label={`Pilih layanan ${service.name}`}
-                className={`mt-4 min-h-12 w-full rounded-xl border px-4 py-3 text-sm font-semibold ${
-                  selectedServiceIds.includes(service.id)
-                    ? "border-primary bg-primary text-white"
-                    : "border-primary bg-white text-primary hover:bg-soft"
-                }`}
-              >
-                {selectedServiceIds.includes(service.id)
-                  ? "✓ Dipilih — klik untuk batal"
-                  : "Pilih layanan"}
-              </button>
-            </article>
-          ))}
-        </div>
+              return (
+                <article
+                  key={service.id}
+                  className={`flex flex-col overflow-hidden rounded-2xl border transition-colors ${
+                    isSelected
+                      ? "border-primary bg-white ring-1 ring-primary"
+                      : "border-soft bg-white"
+                  }`}
+                >
+                  <div
+                    aria-hidden="true"
+                    className={`h-2 ${isSelected ? "bg-primary" : "bg-accent"}`}
+                  />
+
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="rounded-full bg-peach-light px-3 py-1 text-xs font-semibold text-primary">
+                        {service.duration} menit
+                      </span>
+
+                      {isSelected && (
+                        <span className="text-xs font-semibold text-primary">
+                          ✓ Dipilih
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="mt-4 break-words text-lg font-bold leading-snug text-primary">
+                      {service.name}
+                    </h3>
+
+                    <div className="mt-auto pt-5">
+                      <div className="border-t border-soft pt-4">
+                        <p className="text-xs text-muted">Harga layanan</p>
+
+                        <p className="mt-1 text-xl font-bold text-primary">
+                          Rp {service.price.toLocaleString("id-ID")}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleService(service.id)}
+                        aria-pressed={isSelected}
+                        aria-label={`Pilih layanan ${service.name}`}
+                        className={`mt-4 min-h-12 w-full rounded-xl border px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                          isSelected
+                            ? "border-primary bg-primary text-white hover:bg-primary/90"
+                            : "border-soft bg-peach-light text-primary hover:bg-accent/40"
+                        }`}
+                      >
+                        {isSelected
+                          ? "✓ Dipilih · Batalkan"
+                          : "+ Pilih layanan"}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {!isLoading && !errorMessage && selectedServices.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-soft bg-white p-5">
-          <h2 className="text-lg font-bold text-primary">Layanan pilihanmu</h2>
+        <section
+          aria-labelledby="selected-services-title"
+          className="mt-8 overflow-hidden rounded-[2rem] border border-soft bg-peach-light"
+        >
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.12em] text-muted">
+                  RINGKASAN PILIHAN
+                </p>
 
-          <ul className="mt-4 space-y-3">
-            {selectedServices.map((service) => (
-              <li
-                key={service.id}
-                className="flex items-start justify-between gap-4"
-              >
-                <span className="text-sm text-muted">{service.name}</span>
+                <h2
+                  id="selected-services-title"
+                  className="mt-2 text-xl font-bold text-primary"
+                >
+                  Layanan pilihanmu
+                </h2>
+              </div>
 
-                <span className="shrink-0 text-sm font-semibold text-primary">
-                  Rp {service.price.toLocaleString("id-ID")}
-                </span>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-4 space-y-2 border-t border-soft pt-4">
-            <div className="flex justify-between gap-4 text-sm text-muted">
-              <span>Jumlah layanan</span>
-              <span>{selectedServices.length} layanan</span>
+              <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-primary">
+                {selectedServices.length} layanan
+              </span>
             </div>
 
-            <div className="flex justify-between gap-4 text-sm text-muted">
-              <span>Total durasi</span>
-              <span>{totalDuration} menit</span>
-            </div>
+            <ul className="mt-5 divide-y divide-soft rounded-2xl bg-white px-4">
+              {selectedServices.map((service) => (
+                <li
+                  key={service.id}
+                  className="flex items-start justify-between gap-4 py-4"
+                >
+                  <span className="min-w-0 break-words text-sm text-primary">
+                    {service.name}
+                  </span>
 
-            <div className="flex justify-between gap-4 font-bold text-primary">
-              <span>Subtotal</span>
-              <span>Rp {subtotal.toLocaleString("id-ID")}</span>
-            </div>
+                  <span className="shrink-0 text-sm font-semibold text-primary">
+                    Rp {service.price.toLocaleString("id-ID")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <dl className="mt-5 space-y-3">
+              <div className="flex justify-between gap-4 text-sm">
+                <dt className="text-muted">Total durasi</dt>
+                <dd className="font-semibold text-primary">
+                  {totalDuration} menit
+                </dd>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-secondary/25 pt-4">
+                <dt className="font-semibold text-primary">Subtotal</dt>
+                <dd className="text-2xl font-bold text-primary">
+                  Rp {subtotal.toLocaleString("id-ID")}
+                </dd>
+              </div>
+            </dl>
+
+            <p className="mt-3 text-xs leading-5 text-muted">
+              Harga belum termasuk potongan membership. Total akhir akan
+              dihitung saat proses booking.
+            </p>
+
+            <Link
+              to={`/booking?services=${selectedServiceIds.join(",")}`}
+              className="mt-5 flex min-h-12 items-center justify-center gap-3 rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
+            >
+              Lanjut booking
+              <span aria-hidden="true">→</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setSelectedServiceIds([])}
+              className="mt-2 min-h-11 w-full rounded-xl px-4 py-2 text-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:bg-white/50"
+            >
+              Hapus semua pilihan
+            </button>
           </div>
-
-          <p className="mt-3 text-xs leading-5 text-muted">
-            Harga belum termasuk potongan membership. Total akhir akan dihitung
-            saat proses booking.
-          </p>
-
-          <Link
-            to={`/booking?services=${selectedServiceIds.join(",")}`}
-            className="mt-5 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
-          >
-            Lanjut booking
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setSelectedServiceIds([])}
-            className="mt-4 min-h-11 text-sm font-semibold text-primary underline"
-          >
-            Hapus semua pilihan
-          </button>
-        </div>
+        </section>
       )}
     </section>
   );

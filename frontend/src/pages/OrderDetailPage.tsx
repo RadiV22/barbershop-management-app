@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import api from "../lib/axios";
+import { socket } from "../lib/socket";
 
 type ServiceStatus = "WAITING" | "IN_SERVICE" | "COMPLETED";
 type PaymentMethod = "CASH" | "TRANSFER" | "QRIS" | "CARD" | "OTHER";
@@ -104,15 +105,12 @@ export default function OrderDetailPage() {
   const [paymentNeedsReload, setPaymentNeedsReload] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [invoiceError, setInvoiceError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let ignore = false;
 
     async function loadOrder() {
-      setIsLoading(true);
-      setErrorMessage("");
-      setOrder(null);
-
       const orderId = Number(id);
 
       if (!Number.isInteger(orderId) || orderId <= 0) {
@@ -128,6 +126,7 @@ export default function OrderDetailPage() {
 
         if (!ignore) {
           setOrder(response.data.data);
+          setErrorMessage("");
         }
       } catch (error) {
         if (ignore) return;
@@ -154,7 +153,25 @@ export default function OrderDetailPage() {
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, refreshKey]);
+
+  useEffect(() => {
+    function handleOrdersChanged() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    function handleConnect() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    socket.on("orders:changed", handleOrdersChanged);
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("orders:changed", handleOrdersChanged);
+      socket.off("connect", handleConnect);
+    };
+  }, []);
 
   async function handleUpdateStatus() {
     if (!order || isUpdatingStatus) return;

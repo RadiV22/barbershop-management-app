@@ -410,6 +410,23 @@ export default function BookingPage() {
     }
   }
 
+  useEffect(() => {
+    function refreshBookings() {
+      if (document.visibilityState !== "visible") return;
+
+      setRefreshKey((current) => current + 1);
+    }
+
+    const intervalId = window.setInterval(refreshBookings, 30_000);
+
+    document.addEventListener("visibilitychange", refreshBookings);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshBookings);
+    };
+  }, []);
+
   return (
     <section>
       <h1 className="text-2xl font-bold text-gray-900">Booking customer</h1>

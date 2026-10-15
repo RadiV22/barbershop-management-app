@@ -3,7 +3,10 @@ import { getMidtransTransactionStatus } from "./midtrans-status.service.js";
 import { findScheduleConflict } from "./schedule.service.js";
 import { mapMidtransPaymentStatus } from "../utils/midtrans-payment-status.js";
 import { parseMidtransTime } from "../utils/midtrans-time.utils.js";
-import { notifyBookingChanged } from "../lib/socket.js";
+import {
+  notifyBookingChanged,
+  notifyAvailabilityChanged,
+} from "../lib/socket.js";
 
 type MidtransStatus = Awaited<ReturnType<typeof getMidtransTransactionStatus>>;
 
@@ -250,6 +253,7 @@ export async function syncBookingPayment(
   });
 
   notifyBookingChanged(initialPayment.booking.schedule.customerId);
+  notifyAvailabilityChanged();
 
   return syncResult;
 }

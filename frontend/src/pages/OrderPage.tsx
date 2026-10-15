@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import api from "../lib/axios";
+import { socket } from "../lib/socket";
 
 type ServiceStatus = "WAITING" | "IN_SERVICE" | "COMPLETED";
 type PaymentStatus = "UNPAID" | "PAID";
@@ -97,6 +98,7 @@ export default function OrderPage() {
   const [serviceStatus, setServiceStatus] = useState<ServiceStatus | "">("");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | "">("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,7 +148,7 @@ export default function OrderPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, serviceStatus, paymentStatus, sortOrder]);
+  }, [search, serviceStatus, paymentStatus, sortOrder, refreshKey]);
 
   async function handleDeleteOrder(order: Order) {
     if (deletingOrderId !== null) {
@@ -191,6 +193,24 @@ export default function OrderPage() {
     setPaymentStatus("");
     setSortOrder("desc");
   }
+
+  useEffect(() => {
+    function handleOrdersChanged() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    function handleConnect() {
+      setRefreshKey((current) => current + 1);
+    }
+
+    socket.on("orders:changed", handleOrdersChanged);
+    socket.on("connect", handleConnect);
+
+    return () => {
+      socket.off("orders:changed", handleOrdersChanged);
+      socket.off("connect", handleConnect);
+    };
+  }, []);
 
   return (
     <div>

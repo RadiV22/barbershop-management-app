@@ -405,10 +405,46 @@ export default function BookingPage() {
     }
   }
 
+  useEffect(() => {
+    if (!canLoadSlots || createdBooking) return;
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+
+      setAvailabilityRefreshKey((current) => current + 1);
+    }, 30_000);
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        setAvailabilityRefreshKey((current) => current + 1);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [canLoadSlots, createdBooking]);
+
   if (createdBooking) {
     return (
-      <section className="px-5 py-6">
-        <h1 className="text-2xl font-bold text-primary">Booking</h1>
+      <section className="px-5 py-6 sm:px-8 sm:py-8">
+        <header>
+          <p className="text-xs font-bold tracking-[0.16em] text-muted">
+            BOOKING BARBERBRO
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-primary">
+            Satu langkah lagi.
+          </h1>
+
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Booking sudah dibuat. Lanjutkan pembayaran untuk mengonfirmasi
+            kunjunganmu.
+          </p>
+        </header>
 
         <div
           role="status"
@@ -424,10 +460,10 @@ export default function BookingPage() {
           </p>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-soft bg-white p-5">
+        <div className="mt-5 rounded-3xl border border-soft bg-white p-5 sm:p-6">
           <h2 className="text-lg font-bold text-primary">Rincian tagihan</h2>
 
-          <dl className="mt-4 space-y-3 text-sm">
+          <dl className="mt-5 space-y-4 rounded-2xl bg-peach-light p-4 text-sm sm:p-5">
             <div className="flex justify-between gap-4">
               <dt className="text-muted">Subtotal</dt>
               <dd className="font-semibold text-primary">
@@ -487,16 +523,25 @@ export default function BookingPage() {
   }
 
   return (
-    <section className="px-5 py-6">
+    <section className="px-5 py-6 sm:px-8 sm:py-8">
       <Link to="/services" className="text-sm font-semibold text-primary">
         ← Kembali ke layanan
       </Link>
 
-      <h1 className="mt-5 text-2xl font-bold text-primary">Booking</h1>
+      <header className="mt-5 rounded-[2rem] bg-peach-light p-6 sm:p-8">
+        <p className="text-xs font-bold tracking-[0.16em] text-primary">
+          RENCANAKAN KUNJUNGAN
+        </p>
 
-      <p className="mt-2 text-sm leading-6 text-muted">
-        Periksa layanan pilihanmu sebelum menentukan kapster dan jadwal.
-      </p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-primary">
+          Waktunya merawat diri.
+        </h1>
+
+        <p className="mt-3 max-w-sm text-sm leading-6 text-muted">
+          Periksa layanan pilihanmu, lalu tentukan kapster dan jam kunjungan
+          yang tersedia.
+        </p>
+      </header>
 
       {isLoading && (
         <p role="status" className="mt-6 text-sm text-muted">
@@ -514,7 +559,7 @@ export default function BookingPage() {
       )}
 
       {!isLoading && !errorMessage && selectedServices.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-soft bg-white p-5">
+        <div className="mt-6 rounded-3xl border border-soft bg-white p-5 sm:p-6">
           <h2 className="text-lg font-bold text-primary">Layanan pilihanmu</h2>
 
           <ul className="mt-4 divide-y divide-soft">
@@ -583,9 +628,19 @@ export default function BookingPage() {
         !isLoading &&
         !errorMessage &&
         selectedServices.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-soft bg-white p-5">
-            <h2 className="text-lg font-bold text-primary">Pilih kapster</h2>
+          <div className="mt-6 rounded-3xl border border-soft bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-peach-light text-sm font-bold text-primary"
+              >
+                1
+              </span>
 
+              <h2 className="text-lg font-bold text-primary">
+                Kapster & tanggal
+              </h2>
+            </div>
             <p className="mt-2 text-sm leading-6 text-muted">
               Pilih kapster yang kamu inginkan untuk kunjungan ini.
             </p>
@@ -666,8 +721,8 @@ export default function BookingPage() {
                     />
 
                     <p className="mt-2 text-xs leading-5 text-muted">
-                      Pilih tanggal hari ini sampai 7 hari ke depan. Jam
-                      operasional 10.00–21.00 WIB.
+                      Pilih tanggal hari ini sampai 7 hari ke depan. Pilihan jam
+                      mengikuti ketersediaan kapster dan jam operasional.
                     </p>
                   </div>
                 </div>
@@ -676,7 +731,7 @@ export default function BookingPage() {
         )}
 
       {canLoadSlots && (
-        <div className="mt-6 rounded-2xl border border-soft bg-white p-5">
+        <div className="mt-6 rounded-3xl border border-soft bg-white p-5 sm:p-6">
           <h2 className="text-lg font-bold text-primary">
             Pilih jam kunjungan
           </h2>
@@ -706,13 +761,14 @@ export default function BookingPage() {
 
           {!isLoadingSlots && !slotsError && recommendedSlot && (
             <div className="mt-4">
-              <div className="rounded-xl border border-soft bg-background p-4">
+              <div className="rounded-2xl border border-accent/30 bg-sage-light p-5">
                 <p className="text-sm font-semibold text-muted">
                   Jadwal tersedia paling awal
                 </p>
 
-                <p className="mt-2 text-xl font-bold text-primary">
-                  {recommendedSlot.time} WIB
+                <p className="mt-3 text-3xl font-bold tracking-tight text-primary">
+                  {recommendedSlot.time}
+                  <span className="ml-2 text-sm font-semibold">WIB</span>
                 </p>
 
                 <p className="mt-1 text-sm text-muted">
@@ -807,12 +863,19 @@ export default function BookingPage() {
         !slotsError &&
         selectedSlot &&
         selectedKapster && (
-          <div className="mt-6 rounded-2xl border border-soft bg-white p-5">
-            <h2 className="text-lg font-bold text-primary">
-              Ringkasan kunjungan
-            </h2>
+          <div className="mt-6 rounded-3xl border border-soft bg-white p-5 sm:p-6">
+            <div className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-peach-light text-sm font-bold text-primary"
+              >
+                2
+              </span>
 
-            <dl className="mt-4 space-y-3 text-sm">
+              <h2 className="text-lg font-bold text-primary">Jam kunjungan</h2>
+            </div>
+
+            <dl className="mt-5 space-y-4 rounded-2xl bg-white p-4 text-sm sm:p-5">
               <div className="flex justify-between gap-4">
                 <dt className="text-muted">Customer</dt>
                 <dd className="text-right font-semibold text-primary">
@@ -868,9 +931,8 @@ export default function BookingPage() {
             </dl>
 
             <p className="mt-4 text-xs leading-5 text-muted">
-              {createdBooking
-                ? "Rincian harga booking yang tersimpan ditampilkan di bawah."
-                : "Subtotal belum termasuk diskon membership. Jadwal belum dipesan sampai proses booking berhasil."}
+              Subtotal belum termasuk diskon membership. Jadwal belum dipesan
+              sampai proses booking berhasil.
             </p>
             <div className="mt-5 border-t border-soft pt-5">
               <label
