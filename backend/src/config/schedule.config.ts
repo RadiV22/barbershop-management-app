@@ -9,7 +9,7 @@ export const SCHEDULE_CONFIG = {
   closingMinutes: 24 * 60,
 
   // Pilihan jam mulai: 10.00, 10.15, 10.30, dan seterusnya.
-  slotIntervalMinutes: 15,
+  slotIntervalMinutes: 5,
 
   // Jeda setelah layanan selesai.
   bufferMinutes: 5,
