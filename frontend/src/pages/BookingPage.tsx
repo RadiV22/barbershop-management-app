@@ -10,7 +10,8 @@ type BookingStatus =
   | "CONFIRMED"
   | "COMPLETED"
   | "CANCELLED"
-  | "EXPIRED";
+  | "EXPIRED"
+  | "NO_SHOW";
 
 type BookingFilter = "ALL" | BookingStatus;
 
@@ -65,6 +66,8 @@ interface Booking {
   notes: string | null;
   subtotal: number;
   discountPercent: number;
+  noShowAt: string | null;
+  noShowReason: string | null;
   discount: number;
   items: {
     id: number;
@@ -120,6 +123,7 @@ const bookingStatusLabels: Record<BookingStatus, string> = {
   COMPLETED: "Selesai",
   CANCELLED: "Dibatalkan",
   EXPIRED: "Kedaluwarsa",
+  NO_SHOW: "Tidak datang",
 };
 
 const paymentStatusLabels: Record<BookingPaymentStatus, string> = {
@@ -140,6 +144,7 @@ const bookingStatusClasses: Record<BookingStatus, string> = {
   COMPLETED: "bg-blue-100 text-blue-800",
   CANCELLED: "bg-red-100 text-red-800",
   EXPIRED: "bg-gray-100 text-gray-600",
+  NO_SHOW: "border-amber-200 bg-amber-50 text-amber-800",
 };
 
 export default function BookingPage() {
@@ -167,6 +172,11 @@ export default function BookingPage() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [reviewError, setReviewError] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState("");
+  const [noShowBookingId, setNoShowBookingId] = useState<number | null>(null);
+  const [noShowReason, setNoShowReason] = useState("");
+  const [isSubmittingNoShow, setIsSubmittingNoShow] = useState(false);
+  const [noShowError, setNoShowError] = useState("");
+  const [noShowSuccess, setNoShowSuccess] = useState("");
 
   useEffect(() => {
     let isActive = true;
@@ -275,6 +285,85 @@ export default function BookingPage() {
       setCheckInError(message);
     } finally {
       setCheckingInId(null);
+    }
+  }
+
+  async function handleMarkNoShow() {
+    if (
+      noShowBookingId === null ||
+      isSubmittingNoShow ||
+      checkingInId !== null ||
+      checkingPaymentId !== null ||
+      isSubmittingReview
+    ) {
+      return;
+    }
+
+    const reason = noShowReason.trim();
+
+    setNoShowError("");
+    setNoShowSuccess("");
+
+    if (reason.length < 5 || reason.length > 500) {
+      setNoShowError("Alasan harus berisi 5–500 karakter.");
+      return;
+    }
+
+    const bookingId = noShowBookingId;
+
+    setIsSubmittingNoShow(true);
+
+    try {
+      const response = await api.post<{
+        message: string;
+        data: {
+          bookingId: number;
+          status: "NO_SHOW";
+          noShowAt: string;
+        };
+      }>(`/booking/${bookingId}/no-show`, {
+        reason,
+      });
+
+      setBookings((current) =>
+        current.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, displayStatus: "NO_SHOW" }
+            : booking,
+        ),
+      );
+
+      setNoShowSuccess(response.data.message);
+      setNoShowBookingId(null);
+      setNoShowReason("");
+
+      // Ambil ulang data lengkap setelah perubahan berhasil.
+      setRefreshKey((current) => current + 1);
+    } catch (error) {
+      let message = "Customer belum berhasil ditandai tidak datang.";
+
+      if (
+        axios.isAxiosError<{
+          message?: string;
+          errors?: { field: string; message: string }[];
+        }>(error)
+      ) {
+        if (error.response) {
+          message =
+            error.response.data.errors
+              ?.map((issue) => issue.message)
+              .join(" ") ||
+            error.response.data.message ||
+            message;
+        } else {
+          message =
+            "Respons server belum diterima. Perbarui daftar booking untuk memastikan status sebelum mencoba kembali.";
+        }
+      }
+
+      setNoShowError(message);
+    } finally {
+      setIsSubmittingNoShow(false);
     }
   }
 
@@ -427,6 +516,19 @@ export default function BookingPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (noShowBookingId === null) return;
+
+    document.getElementById("no-show-form")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    document.getElementById("no-show-reason")?.focus({
+      preventScroll: true,
+    });
+  }, [noShowBookingId]);
+
   return (
     <section>
       <h1 className="text-2xl font-bold text-gray-900">Booking customer</h1>
@@ -564,6 +666,92 @@ export default function BookingPage() {
             {filteredBookings.length} booking ditampilkan dari {bookings.length}{" "}
             booking.
           </p>
+          {noShowSuccess && (
+            <p
+              role="status"
+              className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-800"
+            >
+              {noShowSuccess}
+            </p>
+          )}
+
+          {noShowBookingId !== null && (
+            <form
+              id="no-show-form"
+              className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleMarkNoShow();
+              }}
+            >
+              <h2 className="font-bold text-gray-900">
+                Tandai booking #{noShowBookingId} tidak datang
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-gray-700">
+                Tindakan ini hanya dapat dilakukan setelah waktu layanan
+                berakhir dan customer belum check-in. Pembayaran tetap tercatat
+                tanpa refund otomatis.
+              </p>
+
+              <label
+                htmlFor="no-show-reason"
+                className="mt-4 block text-sm font-semibold text-gray-800"
+              >
+                Alasan tidak datang
+              </label>
+
+              <textarea
+                id="no-show-reason"
+                value={noShowReason}
+                onChange={(event) => setNoShowReason(event.target.value)}
+                disabled={isSubmittingNoShow}
+                minLength={5}
+                maxLength={500}
+                required
+                rows={3}
+                placeholder="Customer tidak datang sampai waktu layanan berakhir."
+                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
+              />
+
+              {noShowError && (
+                <p role="alert" className="mt-3 text-sm text-red-700">
+                  {noShowError}
+                </p>
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  disabled={
+                    isSubmittingNoShow ||
+                    checkingInId !== null ||
+                    checkingPaymentId !== null ||
+                    isSubmittingReview ||
+                    isLoading
+                  }
+                  className="min-h-11 rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmittingNoShow
+                    ? "Menyimpan..."
+                    : "Konfirmasi tidak datang"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSubmittingNoShow}
+                  onClick={() => {
+                    setNoShowBookingId(null);
+                    setNoShowReason("");
+                    setNoShowError("");
+                  }}
+                  className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          )}
 
           {filteredBookings.length === 0 ? (
             <div className="rounded-xl border border-gray-200 bg-white p-5">
@@ -998,6 +1186,49 @@ export default function BookingPage() {
                       )}
                     </div>
                   ) : null}
+                  {booking.displayStatus === "CONFIRMED" &&
+                    booking.schedule.orderId === null && (
+                      <button
+                        type="button"
+                        disabled={
+                          isLoading ||
+                          isSubmittingNoShow ||
+                          checkingInId !== null ||
+                          checkingPaymentId !== null ||
+                          isSubmittingReview
+                        }
+                        onClick={() => {
+                          setNoShowBookingId(booking.id);
+                          setNoShowReason("");
+                          setNoShowError("");
+                          setNoShowSuccess("");
+                        }}
+                        className="mt-3 min-h-11 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Tidak datang
+                      </button>
+                    )}
+                  {booking.displayStatus === "NO_SHOW" && (
+                    <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <h3 className="text-sm font-semibold text-amber-900">
+                        Catatan tidak datang
+                      </h3>
+
+                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-amber-800">
+                        {booking.noShowReason || "Alasan belum tersedia."}
+                      </p>
+
+                      {booking.noShowAt && (
+                        <p className="mt-2 text-xs text-amber-700">
+                          Dicatat pada{" "}
+                          {new Date(booking.noShowAt).toLocaleString("id-ID", {
+                            timeZone: "Asia/Jakarta",
+                          })}{" "}
+                          WIB
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </article>
               ))}
             </div>

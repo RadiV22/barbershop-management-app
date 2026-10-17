@@ -16,6 +16,10 @@ import {
   notifyAvailabilityChanged,
   notifyOrdersChanged,
 } from "../lib/socket.js";
+import {
+  bookingNoShowParamsSchema,
+  bookingNoShowBodySchema,
+} from "../schemas/booking-no-show.schema.js";
 
 export const createBooking = async (
   req: Request,
@@ -920,6 +924,252 @@ export const checkInBooking = async (
     return res.status(201).json({
       message: "Kedatangan customer berhasil dicatat dan order sudah dibuat.",
       data: transactionResult.order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const markBookingNoShow = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        message: "Anda belum terautentikasi",
+      });
+    }
+
+    if (req.user.role !== "ADMIN" && req.user.role !== "STAFF") {
+      return res.status(403).json({
+        message:
+          "Customer tidak datang hanya dapat dicatat oleh admin dan staff",
+      });
+    }
+
+    const paramsResult = bookingNoShowParamsSchema.safeParse(req.params);
+    const bodyResult = bookingNoShowBodySchema.safeParse(req.body);
+
+    if (!paramsResult.success) {
+      return res.status(400).json({
+        message: "ID booking tidak valid",
+        errors: paramsResult.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    if (!bodyResult.success) {
+      return res.status(400).json({
+        message: "Alasan tidak datang tidak valid",
+        errors: bodyResult.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      });
+    }
+
+    const bookingId = paramsResult.data.id;
+    const { reason } = bodyResult.data;
+    const userId = req.user.id;
+
+    const initialBooking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        schedule: {
+          select: {
+            kapsterId: true,
+          },
+        },
+      },
+    });
+
+    if (!initialBooking) {
+      return res.status(404).json({
+        message: "Booking tidak ditemukan",
+      });
+    }
+
+    const transactionResult = await prisma.$transaction(async (tx) => {
+      const kapsterId = initialBooking.schedule.kapsterId;
+
+      // Urutan kunci sama dengan sinkronisasi pembayaran:
+      // kapster terlebih dahulu, kemudian booking.
+      // Kapster nonaktif tetap boleh memiliki booking yang ditandai no-show.
+      const kapsters = await tx.$queryRaw<{ id: number }[]>`
+        SELECT "id"
+        FROM "kapsters"
+        WHERE "id" = ${kapsterId}
+        FOR UPDATE
+      `;
+
+      if (kapsters.length === 0) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message: "Data kapster tidak tersedia.",
+        };
+      }
+
+      await tx.$queryRaw`
+        SELECT "id"
+        FROM "bookings"
+        WHERE "id" = ${bookingId}
+        FOR UPDATE
+      `;
+
+      // Baca ulang setelah memperoleh kunci.
+      const booking = await tx.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+          schedule: true,
+          payments: {
+            include: {
+              payment: true,
+            },
+          },
+        },
+      });
+
+      if (!booking) {
+        return {
+          success: false as const,
+          statusCode: 404,
+          message: "Booking tidak ditemukan.",
+        };
+      }
+
+      const schedule = booking.schedule;
+
+      if (schedule.kapsterId !== kapsterId) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message: "Data booking sudah berubah. Muat ulang lalu coba kembali.",
+        };
+      }
+
+      if (schedule.status === "NO_SHOW" || booking.noShowAt !== null) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message: "Booking ini sudah ditandai tidak datang.",
+        };
+      }
+
+      if (schedule.orderId !== null) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message:
+            "Customer sudah check-in. Booking tidak dapat ditandai tidak datang.",
+        };
+      }
+
+      if (schedule.source !== "ONLINE" || schedule.status !== "CONFIRMED") {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message:
+            "Hanya booking online terkonfirmasi yang dapat ditandai tidak datang.",
+        };
+      }
+
+      const now = new Date();
+
+      if (now.getTime() < schedule.endsAt.getTime()) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message:
+            "Customer belum dapat ditandai tidak datang sebelum waktu layanan berakhir.",
+        };
+      }
+
+      if (booking.payments.some((payment) => payment.needsReview)) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message:
+            "Pembayaran masih membutuhkan pemeriksaan. Selesaikan pemeriksaan terlebih dahulu.",
+        };
+      }
+
+      const paidPayments = booking.payments.filter(
+        (payment) => payment.status === "PAID",
+      );
+
+      if (paidPayments.length !== 1) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message:
+            "Booking harus memiliki tepat satu pembayaran yang berhasil.",
+        };
+      }
+
+      const paidPayment = paidPayments[0]!;
+
+      if (
+        paidPayment.amount !== booking.total ||
+        paidPayment.currency !== "IDR" ||
+        paidPayment.paidAt === null ||
+        paidPayment.payment !== null
+      ) {
+        return {
+          success: false as const,
+          statusCode: 409,
+          message:
+            "Data pembayaran tidak sesuai atau sudah digunakan oleh order.",
+        };
+      }
+
+      await tx.schedule.update({
+        where: { id: schedule.id },
+        data: {
+          status: "NO_SHOW",
+          holdExpiresAt: null,
+        },
+      });
+
+      await tx.booking.update({
+        where: { id: booking.id },
+        data: {
+          noShowAt: now,
+          noShowReason: reason,
+          noShowMarkedById: userId,
+        },
+      });
+
+      return {
+        success: true as const,
+        bookingId: booking.id,
+        customerId: schedule.customerId,
+        noShowAt: now,
+      };
+    });
+
+    if (!transactionResult.success) {
+      return res.status(transactionResult.statusCode).json({
+        message: transactionResult.message,
+      });
+    }
+
+    // Kirim pembaruan setelah transaksi database berhasil.
+    notifyBookingChanged(transactionResult.customerId);
+    notifyAvailabilityChanged();
+
+    return res.status(200).json({
+      message:
+        "Customer berhasil ditandai tidak datang. Pembayaran tetap tercatat dan tidak ada refund otomatis.",
+      data: {
+        bookingId: transactionResult.bookingId,
+        status: "NO_SHOW",
+        noShowAt: transactionResult.noShowAt,
+      },
     });
   } catch (error) {
     next(error);

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import api from "../lib/axios";
 import type { SubmitEvent } from "react";
+import KapsterSchedulePanel from "../components/KapsterSchedulePanel";
 
 interface Kapster {
   id: number;
@@ -41,6 +42,9 @@ export default function KapsterPage() {
 
   const [deleteError, setDeleteError] = useState("");
   const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const [selectedScheduleKapsterId, setSelectedScheduleKapsterId] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     let ignore = false;
@@ -363,6 +367,17 @@ export default function KapsterPage() {
         </div>
       )}
 
+      {selectedScheduleKapsterId !== null &&
+        kapsters.some(
+          (kapster) => kapster.id === selectedScheduleKapsterId,
+        ) && (
+          <KapsterSchedulePanel
+            key={selectedScheduleKapsterId}
+            kapsterId={selectedScheduleKapsterId}
+            onClose={() => setSelectedScheduleKapsterId(null)}
+          />
+        )}
+
       {!isLoading && !errorMessage && (
         <section
           aria-label="Daftar kapster"
@@ -441,7 +456,25 @@ export default function KapsterPage() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedScheduleKapsterId(kapster.id)
+                            }
+                            disabled={
+                              isSaving ||
+                              deletingKapsterId !== null ||
+                              updatingStatusId !== null ||
+                              showForm
+                            }
+                            aria-pressed={
+                              selectedScheduleKapsterId === kapster.id
+                            }
+                            className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Lihat jadwal
+                          </button>
                           <button
                             type="button"
                             disabled={

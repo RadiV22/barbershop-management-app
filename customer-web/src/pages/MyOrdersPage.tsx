@@ -10,7 +10,8 @@ type BookingStatus =
   | "CONFIRMED"
   | "COMPLETED"
   | "CANCELLED"
-  | "EXPIRED";
+  | "EXPIRED"
+  | "NO_SHOW";
 
 interface BookingItem {
   id: number;
@@ -67,6 +68,7 @@ const bookingStatusLabels: Record<BookingStatus, string> = {
   COMPLETED: "Selesai",
   CANCELLED: "Dibatalkan",
   EXPIRED: "Kedaluwarsa",
+  NO_SHOW: "Tidak datang",
 };
 
 const bookingFilterOptions = [
@@ -589,6 +591,14 @@ export default function MyOrdersPage() {
                     </p>
                   )}
                 </div>
+
+                {booking.displayStatus === "NO_SHOW" && (
+                  <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-800">
+                    Kunjungan ini ditandai tidak datang oleh pengelola.
+                    Penandaan ini tidak otomatis mengembalikan pembayaran.
+                    Hubungi barbershop jika membutuhkan bantuan.
+                  </p>
+                )}
               </article>
             ))
           )}

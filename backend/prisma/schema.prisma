@@ -100,10 +100,10 @@ model Payment {
   change         Int           @default(0)
   paidAt         DateTime      @default(now()) @map("paid_at")
 
-  order        Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  receivedById Int?  @map("received_by_id")
-  receivedBy   User? @relation("PaymentReceiver", fields: [receivedById], references: [id], onDelete: Restrict)
-    bookingPaymentId Int?            @unique @map("booking_payment_id")
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  receivedById     Int?            @map("received_by_id")
+  receivedBy       User?           @relation("PaymentReceiver", fields: [receivedById], references: [id], onDelete: Restrict)
+  bookingPaymentId Int?            @unique @map("booking_payment_id")
   bookingPayment   BookingPayment? @relation(fields: [bookingPaymentId], references: [id], onDelete: Restrict)
 
   @@index([receivedById])
@@ -183,6 +183,7 @@ model User {
   receivedPayments     Payment[]            @relation("PaymentReceiver")
 
   bookingPaymentReviews BookingPaymentReview[] @relation("BookingPaymentReviewer")
+  markedNoShowBookings  Booking[]              @relation("BookingNoShowMarker")
 
   @@map("users")
 }
@@ -214,6 +215,7 @@ enum ScheduleStatus {
   COMPLETED
   CANCELLED
   EXPIRED
+  NO_SHOW
 }
 
 model Schedule {
@@ -257,6 +259,12 @@ model Booking {
   schedule Schedule         @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
   items    BookingItem[]
   payments BookingPayment[]
+
+  noShowAt         DateTime? @map("no_show_at")
+  noShowReason     String?   @map("no_show_reason")
+  noShowMarkedById Int?      @map("no_show_marked_by_id")
+
+  noShowMarkedBy User? @relation("BookingNoShowMarker", fields: [noShowMarkedById], references: [id], onDelete: Restrict)
 
   @@map("bookings")
 }
@@ -319,16 +327,15 @@ model BookingPayment {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
-    payment Payment?
+  booking Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  payment Payment?
 
-    reviews BookingPaymentReview[]
+  reviews BookingPaymentReview[]
 
   @@index([bookingId, status])
   @@index([status, expiresAt])
   @@map("booking_payments")
 }
-
 
 model BookingPaymentReview {
   id               Int      @id @default(autoincrement())
