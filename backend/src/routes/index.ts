@@ -20,10 +20,10 @@ router.use("/midtrans", midtransRouter);
 router.use(authentication);
 
 router.use("/dashboard", role(["ADMIN", "STAFF"]), dashboardRouter);
-router.use("/services", serviceRouter);
+router.use("/services", role(["ADMIN", "STAFF"]), serviceRouter);
 router.use("/customer", role(["ADMIN", "STAFF"]), customerRouter);
 router.use("/kapster", role(["ADMIN", "STAFF"]), kapsterRouter);
-router.use("/order", orderRouter);
+router.use("/order", role(["ADMIN", "STAFF"]), orderRouter);
 router.use("/booking", bookingRouter);
 
 export default router;
