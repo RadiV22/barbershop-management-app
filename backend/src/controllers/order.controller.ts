@@ -385,12 +385,26 @@ export const getAllOrder = async (
     const where: Prisma.OrderWhereInput = {};
 
     if (search?.trim()) {
-      where.customer = {
-        name: {
-          contains: search.trim(),
-          mode: "insensitive",
+      const keyword = search.trim();
+
+      where.OR = [
+        {
+          customer: {
+            name: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          },
         },
-      };
+        {
+          kapster: {
+            name: {
+              contains: keyword,
+              mode: "insensitive",
+            },
+          },
+        },
+      ];
     }
 
     if (serviceStatus !== undefined) {

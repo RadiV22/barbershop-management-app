@@ -10,6 +10,8 @@ interface DashboardSummary {
   waitingOrders: number;
   inServiceOrders: number;
   revenueToday: number;
+  revenueThisMonth: number;
+  revenueTotal: number;
 }
 
 interface DashboardResponse {
@@ -123,7 +125,7 @@ function DashboardPage() {
 
             <section
               aria-label="Ringkasan operasional"
-              className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
             >
               <article className="rounded-xl bg-white p-6 shadow-sm">
                 <h2 className="text-sm text-gray-600">Order hari ini</h2>
@@ -148,6 +150,21 @@ function DashboardPage() {
                 <h2 className="text-sm text-gray-600">Pendapatan hari ini</h2>
                 <p className="mt-3 break-words text-2xl font-bold text-green-700">
                   {rupiah(summary.revenueToday)}
+                </p>
+              </article>
+              <article className="min-w-0 rounded-xl bg-white p-6 shadow-sm">
+                <h2 className="text-sm text-gray-600">Pendapatan bulan ini</h2>
+                <p className="mt-3 break-words text-2xl font-bold text-green-700">
+                  {rupiah(summary.revenueThisMonth)}
+                </p>
+              </article>
+
+              <article className="min-w-0 rounded-xl bg-white p-6 shadow-sm">
+                <h2 className="text-sm text-gray-600">
+                  Total pendapatan keseluruhan
+                </h2>
+                <p className="mt-3 break-words text-2xl font-bold text-green-700">
+                  {rupiah(summary.revenueTotal)}
                 </p>
               </article>
             </section>

@@ -23,22 +23,33 @@ realtime terbaru pada dokumentasi ini berfokus pada aplikasi web.
 
 ## Fitur
 
+### Khusus Admin
+
+- Mengakses dashboard ringkasan operasional barbershop.
+- Melihat pendapatan hari ini, bulan ini, dan keseluruhan.
+- Pendapatan dihitung dari pembayaran kasir dan booking online tanpa menghitung ulang pembayaran booking saat check-in.
+- Membuat akun staff setelah login sebagai admin.
+- Menyetujui pembayaran yang membutuhkan pemeriksaan.
+
 ### Admin dan Staff
 
 - Mengelola layanan, customer, membership, dan kapster.
 - Membuat order langsung.
+- Mencari order berdasarkan nama customer atau kapster.
+- Memfilter order berdasarkan status layanan dan pembayaran.
 - Memperbarui status layanan.
 - Mencatat pembayaran order.
 - Melihat booking online dan mencatat kedatangan customer.
 - Memeriksa status pembayaran online.
 - Melihat jadwal kapster, waktu layanan, dan buffer.
 - Menandai customer tidak datang beserta alasan dan waktu pencatatan.
-- Melihat ringkasan dashboard dan riwayat order.
+- Melihat riwayat order.
 - Mengunduh invoice.
 - Menerima pembaruan data secara realtime.
 
-Persetujuan pembayaran yang membutuhkan pemeriksaan hanya dapat
-dilakukan oleh ADMIN.
+Setelah login, admin diarahkan ke Dashboard, sedangkan staff diarahkan
+ke halaman Order. Staff tidak dapat mengakses dashboard atau membuat
+akun staff.
 
 ### Customer
 

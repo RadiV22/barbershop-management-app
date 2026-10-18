@@ -13,19 +13,35 @@ export default function DashboardLayout() {
         </div>
 
         <nav aria-label="Menu utama" className="mt-8 space-y-2">
-          <NavLink
-            to="/dashboard"
-            end
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            Dashboard
-          </NavLink>
+          {user?.role === "ADMIN" && (
+            <NavLink
+              to="/dashboard"
+              end
+              className={({ isActive }) =>
+                `block rounded-lg px-4 py-3 transition-colors ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`
+              }
+            >
+              Dashboard
+            </NavLink>
+          )}
+          {user?.role === "ADMIN" && (
+            <NavLink
+              to="/staff/create"
+              className={({ isActive }) =>
+                `block rounded-lg px-4 py-3 transition-colors ${
+                  isActive
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                }`
+              }
+            >
+              Tambah staff
+            </NavLink>
+          )}
           <NavLink
             to="/services"
             className={({ isActive }) =>

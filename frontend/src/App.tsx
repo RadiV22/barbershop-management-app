@@ -12,6 +12,7 @@ import CreateOrderPage from "./pages/CreateOrderPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import BookingPage from "./pages/BookingPage";
+import CreateStaffPage from "./pages/CreateStaffPage";
 
 function OrderDetailRoute() {
   const { id } = useParams();
@@ -22,16 +23,39 @@ function OrderDetailRoute() {
 function App() {
   const { user } = useAuth();
 
+  const homePath = user?.role === "ADMIN" ? "/dashboard" : "/order";
+
   return (
     <Routes>
       <Route
         path="/login"
-        element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+        element={user ? <Navigate to={homePath} replace /> : <LoginPage />}
       />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              user?.role === "ADMIN" ? (
+                <DashboardPage />
+              ) : (
+                <Navigate to="/order" replace />
+              )
+            }
+          />
+
+          <Route
+            path="/staff/create"
+            element={
+              user?.role === "ADMIN" ? (
+                <CreateStaffPage />
+              ) : (
+                <Navigate to="/order" replace />
+              )
+            }
+          />
+
           <Route path="/services" element={<ServicePage />} />
           <Route path="/customer" element={<CustomerPage />} />
           <Route path="/kapster" element={<KapsterPage />} />
@@ -45,7 +69,7 @@ function App() {
 
       <Route
         path="/"
-        element={<Navigate to={user ? "/dashboard" : "/login"} replace />}
+        element={<Navigate to={user ? homePath : "/login"} replace />}
       />
 
       <Route path="*" element={<Navigate to="/" replace />} />
