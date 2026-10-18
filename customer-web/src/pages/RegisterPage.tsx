@@ -15,15 +15,27 @@ export default function RegisterPage() {
   const [isRegistered, setIsRegistered] = useState(false);
   const { user, isInitializing } = useAuth();
   const [searchParams] = useSearchParams();
+
   const serviceIdsParam = searchParams.get("services");
+  const quantitiesParam = searchParams.get("quantities");
 
-  const loginPath = serviceIdsParam
-    ? `/login?services=${encodeURIComponent(serviceIdsParam)}`
-    : "/login";
+  const bookingParams = new URLSearchParams();
 
-  const destination = serviceIdsParam
-    ? `/booking?services=${encodeURIComponent(serviceIdsParam)}`
-    : "/account";
+  if (serviceIdsParam !== null) {
+    bookingParams.set("services", serviceIdsParam);
+
+    if (quantitiesParam !== null) {
+      bookingParams.set("quantities", quantitiesParam);
+    }
+  }
+
+  const bookingQuery = bookingParams.toString();
+
+  const loginPath =
+    serviceIdsParam !== null ? `/login?${bookingQuery}` : "/login";
+
+  const destination =
+    serviceIdsParam !== null ? `/booking?${bookingQuery}` : "/account";
 
   const inputClassName =
     "min-h-12 w-full rounded-2xl border border-soft bg-background px-4 py-3 text-base text-primary outline-none placeholder:text-muted/70 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60";

@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import prisma from "../lib/prisma.js";
-import { availabilityQuerySchema } from "../schemas/schedule.schema.js";
+import { availabilityRequestSchema } from "../schemas/schedule.schema.js";
 import { SCHEDULE_CONFIG } from "../config/schedule.config.js";
 import {
   addMinutes,
@@ -15,7 +15,7 @@ export const getAvailability = async (
   next: NextFunction,
 ) => {
   try {
-    const result = availabilityQuerySchema.safeParse(req.query);
+    const result = availabilityRequestSchema.safeParse(req.query);
 
     if (!result.success) {
       return res.status(400).json({
@@ -27,7 +27,7 @@ export const getAvailability = async (
       });
     }
 
-    const { date, kapsterId, serviceIds } = result.data;
+    const { date, kapsterId, serviceIds, quantities } = result.data;
 
     const kapster = await prisma.kapster.findUnique({
       where: { id: kapsterId },
@@ -61,17 +61,49 @@ export const getAvailability = async (
       });
     }
 
-    const totalDuration = services.reduce(
-      (total, service) => total + service.duration,
-      0,
+    // Pasangkan jumlah dengan ID layanan dari request.
+    // Urutan hasil query database bisa berbeda dari urutan serviceIds.
+    const quantityByServiceId = new Map<number, number>(
+      serviceIds.map((serviceId, index): [number, number] => [
+        serviceId,
+        quantities[index]!,
+      ]),
     );
 
+    // Durasi per layanan harus valid sebelum dikalikan jumlah.
     if (
-      !Number.isSafeInteger(totalDuration) ||
-      services.some((service) => service.duration <= 0)
+      services.some(
+        (service) =>
+          !Number.isSafeInteger(service.duration) || service.duration <= 0,
+      )
     ) {
       return res.status(409).json({
-        message: "Durasi layanan tidak valid. hubungi pengelola.",
+        message: "Durasi layanan tidak valid. Silakan hubungi pengelola.",
+      });
+    }
+
+    const totalDuration = services.reduce((total, service) => {
+      const quantity = quantityByServiceId.get(service.id)!;
+
+      return total + service.duration * quantity;
+    }, 0);
+
+    if (!Number.isSafeInteger(totalDuration) || totalDuration <= 0) {
+      return res.status(400).json({
+        message:
+          "Total durasi layanan terlalu besar atau tidak valid. Kurangi jumlah layanan.",
+      });
+    }
+
+    // Satu booking harus muat dalam satu hari operasional,
+    // termasuk satu kali buffer setelah seluruh layanan.
+    const operatingMinutes =
+      SCHEDULE_CONFIG.closingMinutes - SCHEDULE_CONFIG.openingMinutes;
+
+    if (totalDuration + SCHEDULE_CONFIG.bufferMinutes > operatingMinutes) {
+      return res.status(400).json({
+        message:
+          "Total durasi layanan beserta buffer melebihi jam operasional. Kurangi jumlah layanan.",
       });
     }
 

@@ -44,9 +44,14 @@ dilakukan oleh ADMIN.
 
 - Registrasi dan login.
 - Melihat serta memilih layanan.
+- Menambah dan mengurangi jumlah setiap layanan melalui tombol + dan −.
 - Memilih kapster dan jadwal tersedia.
+- Satu booking menggunakan satu kapster dengan pengerjaan layanan berurutan.
+- Subtotal dan total durasi dihitung berdasarkan jumlah masing-masing layanan.
+- Buffer ditambahkan sekali setelah seluruh layanan selesai.
 - Membuat booking dengan batas waktu pembayaran.
 - Membayar melalui Midtrans Sandbox.
+- Jumlah layanan tetap dipertahankan saat booking diubah menjadi order melalui check-in oleh admin atau staff.
 - Melihat booking aktif dan riwayat booking.
 - Menerima pembaruan status booking secara realtime.
 

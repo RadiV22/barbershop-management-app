@@ -11,11 +11,27 @@ export default function LoginPage() {
   const { user, login, isInitializing } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const serviceIdsParam = searchParams.get("services");
 
-  const destination = serviceIdsParam
-    ? `/booking?services=${encodeURIComponent(serviceIdsParam)}`
-    : "/account";
+  const serviceIdsParam = searchParams.get("services");
+  const quantitiesParam = searchParams.get("quantities");
+
+  const bookingParams = new URLSearchParams();
+
+  if (serviceIdsParam !== null) {
+    bookingParams.set("services", serviceIdsParam);
+
+    if (quantitiesParam !== null) {
+      bookingParams.set("quantities", quantitiesParam);
+    }
+  }
+
+  const bookingQuery = bookingParams.toString();
+
+  const destination =
+    serviceIdsParam !== null ? `/booking?${bookingQuery}` : "/account";
+
+  const registerPath =
+    serviceIdsParam !== null ? `/register?${bookingQuery}` : "/register";
 
   async function handleLogin() {
     if (isSubmitting || isInitializing) return;
@@ -164,11 +180,7 @@ export default function LoginPage() {
             <p className="mt-6 border-t border-soft pt-5 text-center text-sm leading-6 text-muted">
               Belum punya akun?{" "}
               <Link
-                to={
-                  serviceIdsParam
-                    ? `/register?services=${encodeURIComponent(serviceIdsParam)}`
-                    : "/register"
-                }
+                to={registerPath}
                 className="font-semibold text-primary underline underline-offset-4"
               >
                 Daftar sekarang

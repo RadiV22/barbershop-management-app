@@ -61,5 +61,33 @@ export const availabilityQuerySchema = z.object({
     .refine((value) => value.split(",").every(isValidId), {
       message: "Pilih minimal satu layanan dengan ID valid, dipisahkan koma",
     })
-    .transform((value) => [...new Set(value.split(",").map(Number))]),
+    .transform((value) => value.split(",").map(Number))
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "ID layanan tidak boleh duplikat. Gunakan jumlah layanan.",
+    }),
+
+  quantities: z
+    .string()
+    .regex(/^[1-9]\d*(,[1-9]\d*)*$/, {
+      message:
+        "Jumlah layanan harus berupa bilangan bulat positif, dipisahkan koma",
+    })
+    .transform((value) => value.split(",").map(Number))
+    .refine(
+      (values) =>
+        values.every(
+          (value) => Number.isSafeInteger(value) && value <= 2147483647,
+        ),
+      {
+        message: "Jumlah layanan berada di luar batas yang diperbolehkan",
+      },
+    ),
 });
+
+export const availabilityRequestSchema = availabilityQuerySchema.refine(
+  (data) => data.serviceIds.length === data.quantities.length,
+  {
+    path: ["quantities"],
+    message: "Jumlah pilihan layanan dan jumlah kuantitas harus sama",
+  },
+);

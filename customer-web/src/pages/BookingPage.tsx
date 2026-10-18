@@ -67,6 +67,7 @@ interface CreateBookingResponse {
 export default function BookingPage() {
   const [searchParams] = useSearchParams();
   const serviceIdsParam = searchParams.get("services") ?? "";
+  const quantitiesParam = searchParams.get("quantities");
   const { user, isInitializing } = useAuth();
   const [kapsters, setKapsters] = useState<Kapster[]>([]);
   const [selectedKapsterId, setSelectedKapsterId] = useState("");
@@ -96,27 +97,61 @@ export default function BookingPage() {
 
   const serviceIdParts = serviceIdsParam.split(",");
 
+  const quantityParts =
+    quantitiesParam === null
+      ? serviceIdParts.map(() => "1")
+      : quantitiesParam.split(",");
+
+  function isPositiveIntegerText(value: string) {
+    return (
+      /^[1-9]\d*$/.test(value) &&
+      Number.isSafeInteger(Number(value)) &&
+      Number(value) <= 2147483647
+    );
+  }
+
   const invalidServiceIds =
     !serviceIdsParam ||
-    serviceIdParts.some(
-      (part) =>
-        !/^[1-9]\d*$/.test(part) ||
-        !Number.isSafeInteger(Number(part)) ||
-        Number(part) > 2147483647,
-    );
+    serviceIdParts.some((part) => !isPositiveIntegerText(part)) ||
+    new Set(serviceIdParts).size !== serviceIdParts.length;
+
+  const invalidQuantities =
+    quantityParts.length !== serviceIdParts.length ||
+    quantityParts.some((part) => !isPositiveIntegerText(part));
+
+  const invalidSelection = invalidServiceIds || invalidQuantities;
+
+  const normalizedQuantitiesParam = quantityParts.join(",");
+
+  const quantityByServiceId = new Map<number, number>(
+    invalidSelection
+      ? []
+      : serviceIdParts.map((part, index): [number, number] => [
+          Number(part),
+          Number(quantityParts[index]),
+        ]),
+  );
 
   const currentServicesResult =
     servicesResult?.key === serviceIdsParam ? servicesResult : null;
 
-  const selectedServices = invalidServiceIds
+  const selectedServices = invalidSelection
     ? []
-    : (currentServicesResult?.services ?? []);
+    : (currentServicesResult?.services ?? []).map((service) => ({
+        ...service,
+        quantity: quantityByServiceId.get(service.id) ?? 0,
+      }));
 
-  const errorMessage = invalidServiceIds
-    ? "Pilihan layanan tidak valid. Silakan pilih kembali dari halaman Layanan."
+  const errorMessage = invalidSelection
+    ? "Pilihan atau jumlah layanan tidak valid. Silakan pilih kembali dari halaman Layanan."
     : (currentServicesResult?.error ?? "");
 
-  const isLoading = !invalidServiceIds && currentServicesResult === null;
+  const isLoading = !invalidSelection && currentServicesResult === null;
+
+  const bookingSearchParams = new URLSearchParams({
+    services: serviceIdsParam,
+    quantities: normalizedQuantitiesParam,
+  });
 
   const canLoadSlots =
     !isInitializing &&
@@ -128,7 +163,7 @@ export default function BookingPage() {
     Boolean(selectedDate);
 
   const slotsKey = canLoadSlots
-    ? `${selectedKapsterId}|${selectedDate}|${serviceIdsParam}|${availabilityRefreshKey}`
+    ? `${selectedKapsterId}|${selectedDate}|${serviceIdsParam}|${normalizedQuantitiesParam}|${availabilityRefreshKey}`
     : "";
 
   const currentSlotsResult =
@@ -194,12 +229,17 @@ export default function BookingPage() {
   }, [serviceIdsParam, invalidServiceIds]);
 
   const subtotal = selectedServices.reduce(
-    (total, service) => total + service.price,
+    (total, service) => total + service.price * service.quantity,
     0,
   );
 
   const totalDuration = selectedServices.reduce(
-    (total, service) => total + service.duration,
+    (total, service) => total + service.duration * service.quantity,
+    0,
+  );
+
+  const totalQuantity = selectedServices.reduce(
+    (total, service) => total + service.quantity,
     0,
   );
 
@@ -268,6 +308,7 @@ export default function BookingPage() {
               date: selectedDate,
               kapsterId: selectedKapsterId,
               serviceIds: serviceIdsParam,
+              quantities: normalizedQuantitiesParam,
             },
           },
         );
@@ -311,7 +352,13 @@ export default function BookingPage() {
     return () => {
       isActive = false;
     };
-  }, [slotsKey, selectedDate, selectedKapsterId, serviceIdsParam]);
+  }, [
+    slotsKey,
+    selectedDate,
+    selectedKapsterId,
+    serviceIdsParam,
+    normalizedQuantitiesParam,
+  ]);
 
   useEffect(() => {
     function handleAvailabilityChanged() {
@@ -367,6 +414,7 @@ export default function BookingPage() {
       const response = await api.post<CreateBookingResponse>("/booking", {
         kapsterId: selectedKapster.id,
         serviceIds: selectedServices.map((service) => service.id),
+        quantities: selectedServices.map((service) => service.quantity),
         date: selectedDate,
         time: selectedSlot.time,
         notes: notes.trim(),
@@ -565,11 +613,17 @@ export default function BookingPage() {
           <ul className="mt-4 divide-y divide-soft">
             {selectedServices.map((service) => (
               <li key={service.id} className="py-3 first:pt-0">
-                <p className="font-semibold text-primary">{service.name}</p>
+                <p className="font-semibold text-primary">
+                  {service.name} × {service.quantity}
+                </p>
 
                 <div className="mt-2 flex justify-between gap-4 text-sm text-muted">
-                  <span>{service.duration} menit</span>
-                  <span>Rp {service.price.toLocaleString("id-ID")}</span>
+                  <span>{service.duration * service.quantity} menit</span>
+
+                  <span>
+                    Rp{" "}
+                    {(service.price * service.quantity).toLocaleString("id-ID")}
+                  </span>
                 </div>
               </li>
             ))}
@@ -578,7 +632,9 @@ export default function BookingPage() {
           <div className="mt-4 space-y-3 border-t border-soft pt-4">
             <div className="flex justify-between gap-4 text-sm text-muted">
               <span>Jumlah layanan</span>
-              <span>{selectedServices.length} layanan</span>
+              <span>
+                {selectedServices.length} jenis · {totalQuantity} layanan
+              </span>
             </div>
 
             <div className="flex justify-between gap-4 text-sm text-muted">
@@ -608,7 +664,7 @@ export default function BookingPage() {
               </p>
 
               <Link
-                to={`/login?services=${encodeURIComponent(serviceIdsParam)}`}
+                to={`/login?${bookingSearchParams.toString()}`}
                 className="mt-4 flex min-h-12 items-center justify-center rounded-xl bg-primary px-4 py-3 font-semibold text-white hover:opacity-90"
               >
                 Masuk untuk melanjutkan

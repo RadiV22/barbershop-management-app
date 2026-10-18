@@ -67,7 +67,15 @@ export const createBooking = async (
       });
     }
 
-    const { kapsterId, serviceIds, date, time, notes } = result.data;
+    const { kapsterId, serviceIds, quantities, date, time, notes } =
+      result.data;
+
+    const quantityByServiceId = new Map<number, number>(
+      serviceIds.map((serviceId, index): [number, number] => [
+        serviceId,
+        quantities[index]!,
+      ]),
+    );
 
     const dayStart = parseWibDate(date);
 
@@ -96,8 +104,7 @@ export const createBooking = async (
       startsAt.getTime() >= closingAt.getTime()
     ) {
       return res.status(400).json({
-        message:
-          "Jam mulai booking harus berada antara 10.00 sampai sebelum 21.00 WIb",
+        message: "Jam mulai booking harus berada dalam jam operasional.",
       });
     }
     const transactionResult = await prisma.$transaction(
@@ -139,14 +146,11 @@ export const createBooking = async (
           };
         }
 
-        const totalDuration = services.reduce(
-          (total, service) => total + service.duration,
-          0,
-        );
-
         if (
-          !Number.isSafeInteger(totalDuration) ||
-          services.some((service) => service.duration <= 0)
+          services.some(
+            (service) =>
+              !Number.isSafeInteger(service.duration) || service.duration <= 0,
+          )
         ) {
           return {
             success: false as const,
@@ -155,6 +159,31 @@ export const createBooking = async (
           };
         }
 
+        const totalDuration = services.reduce(
+          (total, service) =>
+            total + service.duration * quantityByServiceId.get(service.id)!,
+          0,
+        );
+
+        if (!Number.isSafeInteger(totalDuration) || totalDuration <= 0) {
+          return {
+            success: false as const,
+            statusCode: 400,
+            message: "Total durasi terlalu besar. Kurangi jumlah layanan.",
+          };
+        }
+
+        const operatingMinutes =
+          SCHEDULE_CONFIG.closingMinutes - SCHEDULE_CONFIG.openingMinutes;
+
+        if (totalDuration + SCHEDULE_CONFIG.bufferMinutes > operatingMinutes) {
+          return {
+            success: false as const,
+            statusCode: 400,
+            message:
+              "Total durasi layanan beserta buffer melebihi jam operasional. Kurangi jumlah layanan.",
+          };
+        }
         // Waktu layanan selesai, kemudian tambahkan buffer.
         const endsAt = addMinutes(startsAt, totalDuration);
 
@@ -257,11 +286,10 @@ export const createBooking = async (
           };
         }
 
-        // Sementara: perhitungan harga dan penyimpanan ditambahkan berikutnya.
-        // Hitung harga seluruh layanan yang dipilih.
-        // Pada booking ini, setiap layanan dipilih satu kali.
+        // Hitung harga berdasarkan jumlah masing-masing layanan.
         const subtotal = services.reduce(
-          (total, service) => total + service.price,
+          (total, service) =>
+            total + service.price * quantityByServiceId.get(service.id)!,
           0,
         );
 
@@ -309,7 +337,7 @@ export const createBooking = async (
           };
         }
 
-        // Diskon dibulatkan ke bawah menjadi rupiah utuh.
+        // Diskon dibulatkan ke rupiah utuh terdekat.
         const discount = Math.round((subtotal * discountPercent) / 100);
 
         const total = subtotal - discount;
@@ -371,7 +399,7 @@ export const createBooking = async (
                   },
                 },
                 serviceName: service.name,
-                quantity: 1,
+                quantity: quantityByServiceId.get(service.id)!,
                 unitPrice: service.price,
                 duration: service.duration,
               })),

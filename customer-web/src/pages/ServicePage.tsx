@@ -19,7 +19,9 @@ export default function ServicePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [serviceQuantities, setServiceQuantities] = useState<
+    Record<number, number>
+  >({});
 
   useEffect(() => {
     let isActive = true;
@@ -56,27 +58,52 @@ export default function ServicePage() {
     service.name.toLowerCase().includes(keyword),
   );
 
-  function handleToggleService(serviceId: number) {
-    setSelectedServiceIds((current) =>
-      current.includes(serviceId)
-        ? current.filter((id) => id !== serviceId)
-        : [...current, serviceId],
-    );
+  function handleChangeQuantity(serviceId: number, change: 1 | -1) {
+    setServiceQuantities((current) => {
+      const nextQuantity = (current[serviceId] ?? 0) + change;
+
+      if (!Number.isSafeInteger(nextQuantity) || nextQuantity < 0) {
+        return current;
+      }
+
+      const next = { ...current };
+
+      if (nextQuantity === 0) {
+        delete next[serviceId];
+      } else {
+        next[serviceId] = nextQuantity;
+      }
+
+      return next;
+    });
   }
 
-  const selectedServices = services.filter((service) =>
-    selectedServiceIds.includes(service.id),
+  const selectedServices = services
+    .filter((service) => (serviceQuantities[service.id] ?? 0) > 0)
+    .map((service) => ({
+      ...service,
+      quantity: serviceQuantities[service.id] ?? 0,
+    }));
+
+  const totalQuantity = selectedServices.reduce(
+    (total, service) => total + service.quantity,
+    0,
   );
 
   const totalDuration = selectedServices.reduce(
-    (total, service) => total + service.duration,
+    (total, service) => total + service.duration * service.quantity,
     0,
   );
 
   const subtotal = selectedServices.reduce(
-    (total, service) => total + service.price,
+    (total, service) => total + service.price * service.quantity,
     0,
   );
+
+  const bookingSearchParams = new URLSearchParams({
+    services: selectedServices.map((service) => service.id).join(","),
+    quantities: selectedServices.map((service) => service.quantity).join(","),
+  });
 
   return (
     <section className="px-5 py-6 sm:px-8 sm:py-8">
@@ -154,7 +181,8 @@ export default function ServicePage() {
 
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {filteredServices.map((service) => {
-              const isSelected = selectedServiceIds.includes(service.id);
+              const quantity = serviceQuantities[service.id] ?? 0;
+              const isSelected = quantity > 0;
 
               return (
                 <article
@@ -196,21 +224,41 @@ export default function ServicePage() {
                         </p>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleToggleService(service.id)}
-                        aria-pressed={isSelected}
-                        aria-label={`Pilih layanan ${service.name}`}
-                        className={`mt-4 min-h-12 w-full rounded-xl border px-4 py-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
-                          isSelected
-                            ? "border-primary bg-primary text-white hover:bg-primary/90"
-                            : "border-soft bg-peach-light text-primary hover:bg-accent/40"
-                        }`}
+                      <div
+                        role="group"
+                        aria-label={`Jumlah layanan ${service.name}`}
+                        className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-soft bg-peach-light p-2"
                       >
-                        {isSelected
-                          ? "✓ Dipilih · Batalkan"
-                          : "+ Pilih layanan"}
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChangeQuantity(service.id, -1)}
+                          disabled={quantity === 0}
+                          aria-label={`Kurangi jumlah ${service.name}`}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-soft bg-white text-xl font-bold text-primary hover:bg-soft/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          −
+                        </button>
+
+                        <div className="text-center">
+                          <p className="text-xs text-muted">Jumlah</p>
+                          <p
+                            aria-live="polite"
+                            aria-atomic="true"
+                            className="text-lg font-bold text-primary"
+                          >
+                            {quantity}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleChangeQuantity(service.id, 1)}
+                          aria-label={`Tambah jumlah ${service.name}`}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary text-xl font-bold text-white hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </article>
@@ -241,7 +289,7 @@ export default function ServicePage() {
               </div>
 
               <span className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-primary">
-                {selectedServices.length} layanan
+                {selectedServices.length} jenis · {totalQuantity} layanan
               </span>
             </div>
 
@@ -252,11 +300,12 @@ export default function ServicePage() {
                   className="flex items-start justify-between gap-4 py-4"
                 >
                   <span className="min-w-0 break-words text-sm text-primary">
-                    {service.name}
+                    {service.name} × {service.quantity}
                   </span>
 
                   <span className="shrink-0 text-sm font-semibold text-primary">
-                    Rp {service.price.toLocaleString("id-ID")}
+                    Rp{" "}
+                    {(service.price * service.quantity).toLocaleString("id-ID")}
                   </span>
                 </li>
               ))}
@@ -284,7 +333,7 @@ export default function ServicePage() {
             </p>
 
             <Link
-              to={`/booking?services=${selectedServiceIds.join(",")}`}
+              to={`/booking?${bookingSearchParams.toString()}`}
               className="mt-5 flex min-h-12 items-center justify-center gap-3 rounded-2xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary/90"
             >
               Lanjut booking
@@ -293,7 +342,7 @@ export default function ServicePage() {
 
             <button
               type="button"
-              onClick={() => setSelectedServiceIds([])}
+              onClick={() => setServiceQuantities({})}
               className="mt-2 min-h-11 w-full rounded-xl px-4 py-2 text-sm font-semibold text-primary underline decoration-primary/30 underline-offset-4 hover:bg-white/50"
             >
               Hapus semua pilihan
