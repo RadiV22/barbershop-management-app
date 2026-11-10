@@ -50,14 +50,6 @@ function formatRupiah(value: number) {
   }).format(value);
 }
 
-function formatDate(value: string | null) {
-  if (!value) return "Tidak tercatat";
-
-  return new Date(value).toLocaleString("id-ID", {
-    timeZone: "Asia/Jakarta",
-  });
-}
-
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState<HistoryOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -142,8 +134,8 @@ export default function OrderHistoryPage() {
   return (
     <div>
       <header>
-        <h1 className="text-2xl font-bold">Riwayat Order</h1>
-        <p className="mt-1 text-gray-600">
+        <h1 className="text-2xl font-bold text-primary">Riwayat Order</h1>
+        <p className="mt-1 text-muted">
           Order yang sudah selesai dilayani dan lunas.
         </p>
       </header>
@@ -153,13 +145,13 @@ export default function OrderHistoryPage() {
           event.preventDefault();
           handleApplyFilters();
         }}
-        className="mt-6 rounded-xl bg-white p-6 shadow-sm"
+        className="mt-6 rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6"
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div>
             <label
               htmlFor="history-search"
-              className="block text-sm font-medium"
+              className="block text-sm font-medium text-primary"
             >
               Nama customer
             </label>
@@ -176,7 +168,7 @@ export default function OrderHistoryPage() {
           <div>
             <label
               htmlFor="history-start"
-              className="block text-sm font-medium"
+              className="block text-sm font-medium text-primary"
             >
               Tanggal mulai
             </label>
@@ -190,7 +182,10 @@ export default function OrderHistoryPage() {
           </div>
 
           <div>
-            <label htmlFor="history-end" className="block text-sm font-medium">
+            <label
+              htmlFor="history-end"
+              className="block text-sm font-medium text-primary"
+            >
               Tanggal akhir
             </label>
             <input
@@ -203,7 +198,7 @@ export default function OrderHistoryPage() {
           </div>
         </div>
 
-        <p className="mt-3 text-sm text-gray-500">
+        <p className="mt-3 text-sm leading-6 text-muted">
           Filter tanggal mengikuti waktu layanan selesai dalam WIB. Tanggal
           boleh dikosongkan.
         </p>
@@ -214,10 +209,10 @@ export default function OrderHistoryPage() {
           </p>
         )}
 
-        <div className="mt-4 flex gap-3">
+        <div className="mt-4 flex flex-wrap gap-3">
           <button
             type="submit"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary"
           >
             Terapkan filter
           </button>
@@ -225,7 +220,7 @@ export default function OrderHistoryPage() {
           <button
             type="button"
             onClick={handleResetFilters}
-            className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+            className="min-h-11 rounded-lg border border-border bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/30"
           >
             Reset
           </button>
@@ -257,7 +252,7 @@ export default function OrderHistoryPage() {
       {!isLoading && !errorMessage && (
         <section
           aria-label="Daftar riwayat order"
-          className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm"
+          className="mt-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm"
         >
           {orders.length === 0 ? (
             <p className="p-6 text-gray-600">
@@ -265,67 +260,119 @@ export default function OrderHistoryPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+              <table className="w-full min-w-[1050px] text-left text-sm">
+                <thead className="border-b border-border bg-soft/30 text-primary">
                   <tr>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Order
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Customer
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Kapster
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Layanan
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Total
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Metode bayar
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Selesai (WIB)
                     </th>
-                    <th scope="col" className="px-6 py-4">
+                    <th scope="col" className="px-4 py-4">
                       Aksi
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {orders.map((order) => (
-                    <tr key={order.id}>
-                      <td className="px-6 py-4 font-medium">#{order.id}</td>
-                      <td className="px-6 py-4">{order.customer.name}</td>
-                      <td className="px-6 py-4">{order.kapster.name}</td>
+                    <tr
+                      key={order.id}
+                      className="transition-colors hover:bg-background"
+                    >
+                      <td className="px-4 py-4 font-medium">#{order.id}</td>
+                      <td className="px-4 py-4">{order.customer.name}</td>
+                      <td className="px-4 py-4">{order.kapster.name}</td>
 
-                      <td className="min-w-48 px-6 py-4">
-                        {order.items.map((item) => (
-                          <p key={item.id}>
-                            {item.serviceName} ×{item.quantity}
-                          </p>
-                        ))}
+                      <td className="min-w-52 max-w-72 px-4 py-4">
+                        <div className="space-y-2">
+                          {order.items.slice(0, 2).map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-start gap-2"
+                            >
+                              <span className="min-w-0 break-words text-stone-800">
+                                {item.serviceName}
+                              </span>
+
+                              <span className="shrink-0 text-xs leading-5 text-muted">
+                                ×{item.quantity}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {order.items.length > 2 && (
+                          <Link
+                            to={`/order/${order.id}`}
+                            className="mt-2 inline-flex min-h-8 items-center text-xs font-semibold text-primary hover:underline"
+                            aria-label={`Lihat semua layanan order #${order.id}`}
+                          >
+                            +{order.items.length - 2} layanan lainnya
+                          </Link>
+                        )}
                       </td>
 
-                      <td className="whitespace-nowrap px-6 py-4">
+                      <td className="whitespace-nowrap px-4 py-4">
                         {formatRupiah(order.total)}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         {order.payment?.method ?? "Tidak tercatat"}
                       </td>
 
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {formatDate(order.completedAt)}
+                      <td className="whitespace-nowrap px-4 py-4">
+                        {order.completedAt ? (
+                          <>
+                            <p className="text-stone-800">
+                              {new Date(order.completedAt).toLocaleDateString(
+                                "id-ID",
+                                {
+                                  timeZone: "Asia/Jakarta",
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
+                            </p>
+
+                            <p className="mt-1 text-xs text-muted">
+                              {new Date(order.completedAt).toLocaleTimeString(
+                                "id-ID",
+                                {
+                                  timeZone: "Asia/Jakarta",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}{" "}
+                              WIB
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-muted">Belum selesai</span>
+                        )}
                       </td>
 
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4">
                         <Link
                           to={`/order/${order.id}`}
-                          className="inline-block rounded-lg bg-blue-50 px-3 py-2 font-medium text-blue-700 hover:bg-blue-100"
+                          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-soft bg-soft/30 px-3 py-2 font-semibold text-primary transition-colors hover:bg-soft/60"
                         >
                           Detail
                         </Link>

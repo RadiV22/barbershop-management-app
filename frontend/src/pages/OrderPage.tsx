@@ -63,12 +63,6 @@ function formatRupiah(value: number) {
   }).format(value);
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleString("id-ID", {
-    timeZone: "Asia/Jakarta",
-  });
-}
-
 function getServiceStatusLabel(status: ServiceStatus) {
   switch (status) {
     case "WAITING":
@@ -216,7 +210,7 @@ export default function OrderPage() {
     <div>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Order</h1>
+          <h1 className="text-2xl font-bold text-primary">Order</h1>
 
           <p className="mt-1 text-gray-600">
             Daftar order customer dan status pembayarannya.
@@ -226,7 +220,7 @@ export default function OrderPage() {
         <button
           type="button"
           onClick={() => navigate("/order/create")}
-          className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700"
+          className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Buat order
         </button>
@@ -238,7 +232,7 @@ export default function OrderPage() {
         </p>
       )}
 
-      <section className="mt-6 rounded-xl bg-white p-6 shadow-sm">
+      <section className="mt-6 rounded-xl border border-border bg-white p-5 shadow-sm">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <label
@@ -254,7 +248,7 @@ export default function OrderPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Nama customer atau kapster..."
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+              className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
             />
           </div>
 
@@ -272,7 +266,7 @@ export default function OrderPage() {
               onChange={(event) =>
                 setServiceStatus(event.target.value as ServiceStatus | "")
               }
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+              className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
             >
               <option value="">Semua status</option>
               <option value="WAITING">Menunggu</option>
@@ -295,7 +289,7 @@ export default function OrderPage() {
               onChange={(event) =>
                 setPaymentStatus(event.target.value as PaymentStatus | "")
               }
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+              className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
             >
               <option value="">Semua pembayaran</option>
               <option value="UNPAID">Belum bayar</option>
@@ -317,7 +311,7 @@ export default function OrderPage() {
               onChange={(event) =>
                 setSortOrder(event.target.value as SortOrder)
               }
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+              className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
             >
               <option value="desc">Terbaru</option>
               <option value="asc">Terlama</option>
@@ -329,7 +323,7 @@ export default function OrderPage() {
           <button
             type="button"
             onClick={handleResetFilter}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+            className="min-h-11 rounded-lg border border-border px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-background"
           >
             Reset filter
           </button>
@@ -360,7 +354,7 @@ export default function OrderPage() {
       )}
 
       {!isLoading && !errorMessage && (
-        <section className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm">
+        <section className="mt-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           {orders.length === 0 ? (
             <div className="p-8 text-center">
               <p className="font-medium text-gray-700">
@@ -372,9 +366,14 @@ export default function OrderPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+            <div
+              className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-primary"
+              tabIndex={0}
+              role="region"
+              aria-label="Daftar order, geser ke samping untuk melihat seluruh kolom"
+            >
+              <table className="w-full min-w-[1100px] text-left text-sm">
+                <thead className="border-b border-border bg-soft/30 text-primary">
                   <tr>
                     <th scope="col" className="whitespace-nowrap px-6 py-4">
                       Order
@@ -414,14 +413,17 @@ export default function OrderPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {orders.map((order) => {
                     const canDelete =
                       order.serviceStatus === "WAITING" &&
                       order.paymentStatus === "UNPAID";
 
                     return (
-                      <tr key={order.id}>
+                      <tr
+                        key={order.id}
+                        className="transition-colors hover:bg-background"
+                      >
                         <td className="whitespace-nowrap px-6 py-4 font-medium">
                           #{order.id}
                         </td>
@@ -430,19 +432,33 @@ export default function OrderPage() {
 
                         <td className="px-6 py-4">{order.kapster.name}</td>
 
-                        <td className="min-w-52 px-6 py-4">
-                          <div className="space-y-1">
-                            {order.items.map((item) => (
-                              <div key={item.id}>
-                                <span className="font-medium">
+                        <td className="min-w-52 max-w-72 px-4 py-4">
+                          <div className="space-y-1.5">
+                            {order.items.slice(0, 2).map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-start gap-2"
+                              >
+                                <span className="min-w-0 break-words leading-5 text-stone-700">
                                   {item.serviceName}
                                 </span>
 
-                                <span className="ml-2 text-gray-500">
-                                  x{item.quantity}
+                                <span className="shrink-0 text-xs leading-5 text-muted">
+                                  ×{item.quantity}
                                 </span>
                               </div>
                             ))}
+
+                            {order.items.length > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/order/${order.id}`)}
+                                className="inline-flex min-h-8 items-center text-xs font-semibold text-primary underline-offset-4 hover:underline"
+                                aria-label={`Lihat seluruh layanan order ${order.id}`}
+                              >
+                                +{order.items.length - 2} layanan lainnya
+                              </button>
+                            )}
                           </div>
                         </td>
 
@@ -476,8 +492,31 @@ export default function OrderPage() {
                           </span>
                         </td>
 
-                        <td className="whitespace-nowrap px-6 py-4 text-gray-600">
-                          {formatDate(order.createdAt)}
+                        <td className="whitespace-nowrap px-4 py-4">
+                          <p className="text-stone-700">
+                            {new Date(order.createdAt).toLocaleDateString(
+                              "id-ID",
+                              {
+                                timeZone: "Asia/Jakarta",
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              },
+                            )}
+                          </p>
+
+                          <p className="mt-1 text-xs text-muted">
+                            {new Date(order.createdAt).toLocaleTimeString(
+                              "id-ID",
+                              {
+                                timeZone: "Asia/Jakarta",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              },
+                            )}{" "}
+                            WIB
+                          </p>
                         </td>
 
                         <td className="px-6 py-4">
@@ -485,7 +524,7 @@ export default function OrderPage() {
                             <button
                               type="button"
                               onClick={() => navigate(`/order/${order.id}`)}
-                              className="rounded-lg bg-blue-50 px-3 py-2 font-medium text-blue-700 hover:bg-blue-100"
+                              className="min-h-10 rounded-lg border border-soft bg-soft/30 px-3 py-2 font-semibold text-primary transition-colors hover:bg-soft/60"
                             >
                               Detail
                             </button>

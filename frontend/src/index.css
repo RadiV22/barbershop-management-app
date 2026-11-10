@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+@theme {
+  --color-primary: #622b14;
+  --color-secondary: #995f2f;
+  --color-accent: #978f66;
+  --color-soft: #e4d6a9;
+  --color-background: #faf8f3;
+  --color-muted: #6b6259;
+  --color-border: #e9e2d6;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background-color: var(--color-background);
+    color: #29251f;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  button:not(:disabled),
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+.select-arrow {
+  appearance: none;
+  padding-right: 2.75rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23622b14' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem;
+}

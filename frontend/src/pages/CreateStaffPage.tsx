@@ -82,13 +82,13 @@ export default function CreateStaffPage() {
   }
 
   const inputClassName =
-    "mt-2 min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-50";
+    "mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
     <section className="max-w-xl">
-      <h1 className="text-2xl font-bold text-gray-900">Tambah staff</h1>
+      <h1 className="text-2xl font-bold text-primary">Tambah staff</h1>
 
-      <p className="mt-2 text-sm leading-6 text-gray-600">
+      <p className="mt-2 text-sm leading-6 text-muted">
         Buat akun staff untuk membantu mengelola operasional barbershop.
       </p>
 
@@ -102,14 +102,17 @@ export default function CreateStaffPage() {
       )}
 
       <form
-        className="mt-6 space-y-5 rounded-2xl border border-gray-200 bg-white p-6"
+        className="mt-6 space-y-5 rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6"
         onSubmit={(event) => {
           event.preventDefault();
           void handleCreateStaff();
         }}
       >
         <div>
-          <label htmlFor="staff-name" className="text-sm font-semibold">
+          <label
+            htmlFor="staff-name"
+            className="block text-sm font-semibold text-primary"
+          >
             Nama staff
           </label>
           <input
@@ -125,7 +128,10 @@ export default function CreateStaffPage() {
         </div>
 
         <div>
-          <label htmlFor="staff-email" className="text-sm font-semibold">
+          <label
+            htmlFor="staff-email"
+            className="block text-sm font-semibold text-primary"
+          >
             Email staff
           </label>
           <input
@@ -143,7 +149,10 @@ export default function CreateStaffPage() {
         </div>
 
         <div>
-          <label htmlFor="staff-password" className="text-sm font-semibold">
+          <label
+            htmlFor="staff-password"
+            className="block text-sm font-semibold text-primary"
+          >
             Password
           </label>
           <input
@@ -157,7 +166,7 @@ export default function CreateStaffPage() {
             required
             className={inputClassName}
           />
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-2 text-xs leading-5 text-muted">
             Minimal 8 karakter, maksimal 72 byte.
           </p>
         </div>
@@ -165,7 +174,7 @@ export default function CreateStaffPage() {
         <div>
           <label
             htmlFor="staff-confirm-password"
-            className="text-sm font-semibold"
+            className="block text-sm font-semibold text-primary"
           >
             Konfirmasi password
           </label>
@@ -194,7 +203,7 @@ export default function CreateStaffPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-h-11 w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="min-h-11 w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting ? "Membuat akun..." : "Buat akun staff"}
         </button>

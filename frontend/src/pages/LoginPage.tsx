@@ -40,20 +40,33 @@ function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100 p-6 text-gray-900">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-8 text-stone-800">
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-md flex-col gap-4 rounded-xl bg-white p-8 shadow-sm"
+        className="flex w-full max-w-md flex-col gap-5 rounded-xl border border-border bg-white p-6 shadow-sm sm:p-8"
       >
-        <div>
-          <h1 className="text-2xl font-bold">Barbershop Management</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Masuk menggunakan akun ADMIN atau STAFF.
+        <div className="mb-2">
+          <div
+            aria-hidden="true"
+            className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-soft text-xl font-bold text-primary"
+          >
+            B
+          </div>
+
+          <h1 className="text-2xl font-bold text-primary">
+            Masuk ke BarberBro
+          </h1>
+
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Gunakan akun admin atau staff untuk mengelola barbershop.
           </p>
         </div>
 
         <div>
-          <label htmlFor="email" className="mb-2 block text-sm font-medium">
+          <label
+            htmlFor="email"
+            className="mb-2 block text-sm font-semibold text-primary"
+          >
             Email
           </label>
           <input
@@ -63,12 +76,15 @@ function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-2 focus:outline-blue-600"
+            className="min-h-11 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-2 block text-sm font-medium">
+          <label
+            htmlFor="password"
+            className="mb-2 block text-sm font-semibold text-primary"
+          >
             Password
           </label>
           <input
@@ -78,7 +94,7 @@ function LoginPage() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-600 focus:outline-2 focus:outline-blue-600"
+            className="min-h-11 w-full rounded-lg border border-border bg-background px-3 py-3 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
           />
         </div>
 
@@ -103,9 +119,9 @@ function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="cursor-pointer rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-60"
+          className="min-h-11 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-wait disabled:opacity-60"
         >
-          {isLoading ? "Memproses..." : "Login"}
+          {isLoading ? "Memproses..." : "Masuk"}
         </button>
       </form>
     </main>

@@ -212,8 +212,8 @@ export default function ServicePage() {
     <div>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Layanan</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-primary">Layanan</h1>
+          <p className="mt-1 text-muted">
             Daftar layanan yang tersedia di barbershop.
           </p>
         </div>
@@ -230,7 +230,7 @@ export default function ServicePage() {
               setSuccessMessage("");
               setShowForm(true);
             }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
             Tambah layanan
           </button>
@@ -255,9 +255,9 @@ export default function ServicePage() {
       {isAdmin && showForm && (
         <form
           onSubmit={handleSaveService}
-          className="mt-6 rounded-xl bg-white p-6 shadow-sm"
+          className="mt-6 rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6"
         >
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold text-primary">
             {editingServiceId !== null ? "Edit layanan" : "Tambah layanan"}
           </h2>
 
@@ -265,7 +265,7 @@ export default function ServicePage() {
             <div>
               <label
                 htmlFor="service-name"
-                className="block text-sm font-medium"
+                className="block text-sm font-medium text-primary"
               >
                 Nama layanan
               </label>
@@ -275,14 +275,14 @@ export default function ServicePage() {
                 required
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
             <div>
               <label
                 htmlFor="service-price"
-                className="block text-sm font-medium"
+                className="block text-sm font-medium text-primary"
               >
                 Harga (Rp)
               </label>
@@ -294,14 +294,14 @@ export default function ServicePage() {
                 step="1"
                 value={price}
                 onChange={(event) => setPrice(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
             <div>
               <label
                 htmlFor="service-duration"
-                className="block text-sm font-medium"
+                className="block text-sm font-medium text-primary"
               >
                 Durasi (menit)
               </label>
@@ -313,7 +313,7 @@ export default function ServicePage() {
                 step="1"
                 value={duration}
                 onChange={(event) => setDuration(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -323,7 +323,7 @@ export default function ServicePage() {
                   type="checkbox"
                   checked={isActive}
                   onChange={(event) => setIsActive(event.target.checked)}
-                  className="h-4 w-4"
+                  className="h-4 w-4 accent-primary"
                 />
                 Layanan aktif
               </label>
@@ -335,10 +335,10 @@ export default function ServicePage() {
               </p>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? "Menyimpan..." : "Simpan"}
               </button>
@@ -346,7 +346,7 @@ export default function ServicePage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+                className="min-h-11 rounded-lg border border-border bg-white px-5 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Batal
               </button>
@@ -380,7 +380,7 @@ export default function ServicePage() {
       {!isLoading && !errorMessage && (
         <section
           aria-label="Daftar layanan"
-          className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm"
+          className="mt-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm"
         >
           {services.length === 0 ? (
             <p className="p-6 text-gray-600">
@@ -388,8 +388,8 @@ export default function ServicePage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+              <table className="w-full min-w-[700px] text-left text-sm">
+                <thead className="border-b border-border bg-soft/30 text-primary">
                   <tr>
                     <th scope="col" className="px-6 py-4">
                       Nama layanan
@@ -411,9 +411,12 @@ export default function ServicePage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {services.map((service) => (
-                    <tr key={service.id}>
+                    <tr
+                      key={service.id}
+                      className="transition-colors hover:bg-background"
+                    >
                       <td className="px-6 py-4 font-medium">{service.name}</td>
                       <td className="whitespace-nowrap px-6 py-4">
                         {rupiah.format(service.price)}
@@ -442,7 +445,7 @@ export default function ServicePage() {
                                 setDeleteError("");
                                 handleEditService(service);
                               }}
-                              className="rounded-lg bg-blue-50 px-3 py-2 font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-soft bg-soft/30 px-3 py-2 font-semibold text-primary transition-colors hover:bg-soft/60 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               Edit
                             </button>
@@ -455,7 +458,7 @@ export default function ServicePage() {
                                 deletingServiceId !== null
                               }
                               onClick={() => handleDeleteService(service)}
-                              className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {deletingServiceId === service.id
                                 ? "Menghapus..."

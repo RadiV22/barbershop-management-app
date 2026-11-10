@@ -1,142 +1,151 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
+const navigationItems = [
+  {
+    to: "/dashboard",
+    label: "Dashboard",
+    adminOnly: true,
+    end: true,
+  },
+  {
+    to: "/staff/create",
+    label: "Tambah Staff",
+    adminOnly: true,
+    end: false,
+  },
+  {
+    to: "/services",
+    label: "Layanan",
+    adminOnly: false,
+    end: false,
+  },
+  {
+    to: "/customer",
+    label: "Customer",
+    adminOnly: false,
+    end: false,
+  },
+  {
+    to: "/kapster",
+    label: "Kapster",
+    adminOnly: false,
+    end: false,
+  },
+  {
+    to: "/booking",
+    label: "Booking",
+    adminOnly: false,
+    end: false,
+  },
+  {
+    to: "/order",
+    label: "Order",
+    adminOnly: false,
+    end: true,
+  },
+  {
+    to: "/order/history",
+    label: "Riwayat",
+    adminOnly: false,
+    end: false,
+  },
+];
+
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
 
+  const visibleNavigation = navigationItems.filter(
+    (item) => !item.adminOnly || user?.role === "ADMIN",
+  );
+
+  const userInitial = user?.name?.trim().charAt(0).toUpperCase() || "B";
+
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 lg:flex">
-      <aside className="flex flex-col bg-gray-900 p-6 text-white lg:min-h-screen lg:w-64 lg:shrink-0">
-        <div>
-          <h1 className="text-xl font-bold">BarberBro</h1>
-          <p className="mt-1 text-sm text-gray-400">Management App</p>
+    <div className="min-h-dvh bg-background text-stone-800 lg:flex">
+      <aside className="flex flex-col bg-primary text-white lg:sticky lg:top-0 lg:h-dvh lg:w-64 lg:shrink-0 lg:overflow-y-auto">
+        <div className="border-b border-white/15 px-6 py-7">
+          <div className="flex items-center gap-3">
+            <div
+              aria-hidden="true"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-soft text-lg font-bold text-primary"
+            >
+              B
+            </div>
+
+            <div>
+              <p className="text-xl font-bold tracking-tight">BarberBro</p>
+              <p className="mt-1 text-xs text-white/75">Management App</p>
+            </div>
+          </div>
         </div>
 
-        <nav aria-label="Menu utama" className="mt-8 space-y-2">
-          {user?.role === "ADMIN" && (
-            <NavLink
-              to="/dashboard"
-              end
-              className={({ isActive }) =>
-                `block rounded-lg px-4 py-3 transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`
-              }
+        <div className="px-4 py-5">
+          <p className="mb-3 px-3 text-[11px] font-semibold tracking-[0.18em] text-soft">
+            MENU UTAMA
+          </p>
+
+          <nav
+            aria-label="Menu utama"
+            className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-1"
+          >
+            {visibleNavigation.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `flex min-h-12 items-center border-l-2 px-4 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-soft ${
+                    isActive
+                      ? "border-soft bg-white/8 font-semibold text-soft"
+                      : "border-transparent font-medium text-white/75 hover:border-white/30 hover:bg-white/5 hover:text-white"
+                  }`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        <div className="mt-2 px-4 pb-5 lg:mt-auto lg:pt-6">
+          <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
+            <div className="flex items-center gap-3">
+              <div
+                aria-hidden="true"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-soft text-sm font-bold text-primary"
+              >
+                {userInitial}
+              </div>
+
+              <div className="min-w-0">
+                <p className="break-words text-sm font-semibold">
+                  {user?.name}
+                </p>
+
+                <p className="mt-1 text-xs text-soft">
+                  {user?.role === "ADMIN"
+                    ? "Administrator"
+                    : user?.role === "STAFF"
+                      ? "Staff"
+                      : user?.role}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={logout}
+              className="mt-4 min-h-11 w-full rounded-xl border border-white/25 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-soft"
             >
-              Dashboard
-            </NavLink>
-          )}
-          {user?.role === "ADMIN" && (
-            <NavLink
-              to="/staff/create"
-              className={({ isActive }) =>
-                `block rounded-lg px-4 py-3 transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
-                }`
-              }
-            >
-              Tambah staff
-            </NavLink>
-          )}
-          <NavLink
-            to="/services"
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            Layanan
-          </NavLink>
-          <NavLink
-            to="/customer"
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            Customer
-          </NavLink>
-
-          <NavLink
-            to="/kapster"
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            kapster
-          </NavLink>
-
-          <NavLink
-            to="/booking"
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            Booking
-          </NavLink>
-
-          <NavLink
-            to="/order"
-            end
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            order
-          </NavLink>
-
-          <NavLink
-            to="/order/history"
-            className={({ isActive }) =>
-              `block rounded-lg px-4 py-3 transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`
-            }
-          >
-            Riwayat
-          </NavLink>
-        </nav>
-
-        <div className="mt-8 border-t border-gray-700 pt-6 lg:mt-auto">
-          <p className="font-medium">{user?.name}</p>
-          <p className="mt-1 text-sm text-gray-400">{user?.role}</p>
-
-          <button
-            type="button"
-            onClick={logout}
-            className="mt-4 w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-          >
-            Logout
-          </button>
+              Keluar
+            </button>
+          </div>
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 p-6">
-        <div className="mx-auto max-w-6xl">
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:p-8">
+        <div className="mx-auto w-full max-w-[1440px]">
           <Outlet />
         </div>
       </main>

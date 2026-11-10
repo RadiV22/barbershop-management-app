@@ -531,9 +531,9 @@ export default function BookingPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-bold text-gray-900">Booking customer</h1>
+      <h1 className="text-2xl font-bold text-primary">Booking customer</h1>
 
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-muted">
         Pantau jadwal booking dan catat kedatangan customer.
       </p>
 
@@ -546,15 +546,15 @@ export default function BookingPage() {
           checkingPaymentId !== null ||
           isSubmittingReview
         }
-        className="mt-4 min-h-11 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 min-h-11 rounded-lg border border-border bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading ? "Memuat..." : "Perbarui booking"}
       </button>
 
-      <div className="mt-5">
+      <div className="mt-5 rounded-xl border border-border bg-white p-5 shadow-sm">
         <label
           htmlFor="booking-search"
-          className="mb-2 block text-sm font-semibold text-gray-700"
+          className="mb-2 block text-sm font-semibold text-primary"
         >
           Cari customer
         </label>
@@ -565,7 +565,7 @@ export default function BookingPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Cari nama customer..."
-          className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+          className="min-h-11 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
         />
       </div>
 
@@ -580,10 +580,10 @@ export default function BookingPage() {
             type="button"
             onClick={() => setBookingFilter(option.value)}
             aria-pressed={bookingFilter === option.value}
-            className={`min-h-11 rounded-full border px-4 py-2 text-sm font-semibold ${
+            className={`min-h-11 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${
               bookingFilter === option.value
-                ? "border-blue-600 bg-blue-600 text-white"
-                : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                ? "border-primary bg-primary text-white"
+                : "border-border bg-white text-muted hover:bg-soft/30 hover:text-primary"
             }`}
           >
             {option.label}
@@ -766,10 +766,10 @@ export default function BookingPage() {
               {filteredBookings.map((booking) => (
                 <article
                   key={booking.id}
-                  className="min-w-0 rounded-2xl border border-gray-200 bg-white p-5"
+                  className="min-w-0 rounded-xl border border-border bg-white p-5 shadow-sm"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <h2 className="font-bold text-gray-900">
+                    <h2 className="font-bold text-primary">
                       Booking #{booking.id}
                     </h2>
 
@@ -782,7 +782,7 @@ export default function BookingPage() {
                     </span>
                   </div>
 
-                  <p className="mt-4 break-words text-lg font-semibold text-gray-900">
+                  <p className="mt-4 break-words text-lg font-semibold text-primary">
                     {booking.schedule.customer.name}
                   </p>
 
@@ -792,11 +792,11 @@ export default function BookingPage() {
                   </p>
 
                   <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-stone-800">
                       Kapster: {booking.schedule.kapster.name}
                     </p>
 
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-stone-800">
                       Jadwal:{" "}
                       {new Date(booking.schedule.startsAt).toLocaleString(
                         "id-ID",
@@ -812,7 +812,7 @@ export default function BookingPage() {
                       WIB
                     </p>
 
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted">
                       Perkiraan selesai:{" "}
                       {new Date(booking.schedule.endsAt).toLocaleTimeString(
                         "id-ID",
@@ -827,7 +827,7 @@ export default function BookingPage() {
                   </div>
 
                   <div className="mt-4 border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-primary">
                       Layanan yang dipesan
                     </h3>
 
@@ -859,7 +859,7 @@ export default function BookingPage() {
                   </div>
 
                   {booking.notes?.trim() && (
-                    <div className="mt-4 rounded-xl bg-gray-50 p-4">
+                    <div className="mt-4 rounded-xl border border-border bg-background p-4">
                       <h3 className="text-sm font-semibold text-gray-900">
                         Catatan customer
                       </h3>
@@ -870,7 +870,7 @@ export default function BookingPage() {
                     </div>
                   )}
 
-                  <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+                  <div className="mt-4 space-y-2 rounded-lg border border-border bg-background p-4">
                     <div className="flex items-center justify-between gap-4">
                       <p className="text-sm text-gray-600">Subtotal</p>
 
@@ -892,11 +892,11 @@ export default function BookingPage() {
                     )}
 
                     <div className="flex items-center justify-between gap-4 pt-2">
-                      <p className="font-semibold text-gray-900">
+                      <p className="font-semibold text-primary">
                         Total tagihan
                       </p>
 
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-xl font-bold text-primary">
                         Rp {booking.total.toLocaleString("id-ID")}
                       </p>
                     </div>
@@ -916,7 +916,7 @@ export default function BookingPage() {
                         {booking.payments.map((payment) => (
                           <div
                             key={payment.id}
-                            className="rounded-xl bg-gray-50 p-3"
+                            className="rounded-xl border border-border bg-background p-4"
                           >
                             <p
                               className={`text-sm font-semibold ${
@@ -929,16 +929,18 @@ export default function BookingPage() {
                             >
                               {paymentStatusLabels[payment.status]}
                             </p>
-                            <p className="mt-1 text-sm text-gray-600">
+                            <p className="mt-2 text-sm font-medium text-stone-800">
                               Nominal: Rp{" "}
                               {payment.amount.toLocaleString("id-ID")}
                             </p>
-                            Metode:{" "}
-                            {payment.paymentType === "bank_transfer"
-                              ? "Virtual Account (Midtrans)"
-                              : payment.paymentType || "Belum tersedia"}
+                            <p className="mt-1 text-sm text-muted">
+                              Metode:{" "}
+                              {payment.paymentType === "bank_transfer"
+                                ? "Virtual Account (Midtrans)"
+                                : payment.paymentType || "Belum tersedia"}
+                            </p>
                             {payment.paidAt && (
-                              <p className="mt-2 text-xs text-gray-500">
+                              <p className="mt-2 text-xs leading-5 text-muted">
                                 Pembayaran tercatat:{" "}
                                 {new Date(payment.paidAt).toLocaleString(
                                   "id-ID",
@@ -972,7 +974,7 @@ export default function BookingPage() {
                                 checkingPaymentId !== null ||
                                 isSubmittingReview
                               }
-                              className="mt-3 min-h-11 rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg border border-soft bg-soft/30 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/60 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               {checkingPaymentId === payment.id
                                 ? "Memeriksa pembayaran..."
@@ -981,7 +983,7 @@ export default function BookingPage() {
                             {user?.role === "ADMIN" &&
                               payment.status === "PAID" &&
                               payment.needsReview && (
-                                <div className="mt-4 border-t border-gray-200 pt-4">
+                                <div className="mt-4 border-t border-border pt-4">
                                   {reviewingPaymentId === payment.id ? (
                                     <form
                                       onSubmit={(event) => {
@@ -991,7 +993,7 @@ export default function BookingPage() {
                                     >
                                       <label
                                         htmlFor={`review-reason-${payment.id}`}
-                                        className="mb-2 block text-sm font-semibold text-gray-700"
+                                        className="mb-2 block text-sm font-semibold text-primary"
                                       >
                                         Alasan persetujuan
                                       </label>
@@ -1008,14 +1010,13 @@ export default function BookingPage() {
                                         rows={3}
                                         required
                                         placeholder="Jelaskan hasil pemeriksaan pembayaran..."
-                                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
+                                        className="w-full resize-y rounded-lg border border-border bg-white px-3 py-3 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-50"
                                       />
 
-                                      <p className="mt-2 text-xs text-gray-500">
-                                        Isi 10–500 karakter. Backend akan
-                                        memeriksa kembali pembayaran dan
-                                        ketersediaan jadwal sebelum
-                                        mengonfirmasi booking.
+                                      <p className="mt-2 text-xs leading-5 text-muted">
+                                        Isi 10–500 karakter. Pembayaran dan
+                                        ketersediaan jadwal akan diperiksa
+                                        kembali sebelum booking dikonfirmasi.
                                       </p>
 
                                       <div className="mt-3 flex flex-wrap gap-2">
@@ -1027,7 +1028,7 @@ export default function BookingPage() {
                                             checkingInId !== null ||
                                             checkingPaymentId !== null
                                           }
-                                          className="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                          className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                           {isSubmittingReview
                                             ? "Menyetujui..."
@@ -1042,7 +1043,7 @@ export default function BookingPage() {
                                             setReviewReason("");
                                             setReviewError("");
                                           }}
-                                          className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                          className="min-h-11 rounded-lg border border-border bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                           Tutup
                                         </button>
@@ -1063,7 +1064,7 @@ export default function BookingPage() {
                                         setReviewError("");
                                         setReviewSuccess("");
                                       }}
-                                      className="rounded-lg bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-200 disabled:opacity-50"
+                                      className="min-h-11 rounded-lg border border-amber-200 bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                       Tinjau persetujuan
                                     </button>
@@ -1071,8 +1072,8 @@ export default function BookingPage() {
                                 </div>
                               )}
                             {payment.reviews.length > 0 && (
-                              <div className="mt-4 border-t border-gray-200 pt-4">
-                                <h3 className="text-sm font-semibold text-gray-900">
+                              <div className="mt-4 border-t border-border pt-4">
+                                <h3 className="text-sm font-semibold text-primary">
                                   Riwayat pemeriksaan pembayaran
                                 </h3>
 
@@ -1080,13 +1081,13 @@ export default function BookingPage() {
                                   {payment.reviews.map((review) => (
                                     <div
                                       key={review.id}
-                                      className="rounded-xl bg-gray-50 p-3"
+                                      className="rounded-xl border border-border bg-white p-4"
                                     >
-                                      <p className="text-sm font-semibold text-gray-900">
+                                      <p className="text-sm font-semibold text-primary">
                                         Disetujui oleh {review.reviewedBy.name}
                                       </p>
 
-                                      <p className="mt-1 text-xs text-gray-500">
+                                      <p className="mt-1 text-xs text-muted">
                                         {new Date(
                                           review.createdAt,
                                         ).toLocaleString("id-ID", {
@@ -1100,21 +1101,21 @@ export default function BookingPage() {
                                         WIB
                                       </p>
 
-                                      <p className="mt-3 text-xs font-semibold text-gray-500">
+                                      <p className="mt-3 text-xs font-semibold text-muted">
                                         Alasan persetujuan
                                       </p>
 
-                                      <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700">
+                                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">
                                         {review.reason}
                                       </p>
 
                                       {review.previousReason && (
                                         <>
-                                          <p className="mt-3 text-xs font-semibold text-gray-500">
+                                          <p className="mt-3 text-xs font-semibold text-muted">
                                             Kondisi sebelum persetujuan
                                           </p>
 
-                                          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-600">
+                                          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
                                             {review.previousReason}
                                           </p>
                                         </>
@@ -1131,22 +1132,22 @@ export default function BookingPage() {
                   </div>
 
                   {booking.schedule.orderId !== null ? (
-                    <div className="mt-4 rounded-xl bg-blue-50 p-4">
-                      <p className="text-sm text-blue-700">
+                    <div className="mt-4 rounded-xl border border-soft bg-soft/20 p-4">
+                      <p className="text-sm font-medium text-primary">
                         Kedatangan sudah dicatat · Order #
                         {booking.schedule.orderId}
                       </p>
 
                       <Link
                         to={`/order/${booking.schedule.orderId}`}
-                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary"
                       >
                         Lihat order
                       </Link>
                     </div>
                   ) : booking.displayStatus === "CONFIRMED" ? (
                     <div className="mt-4">
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted">
                         Kedatangan customer belum dicatat.
                       </p>
 
@@ -1177,7 +1178,7 @@ export default function BookingPage() {
                             checkingPaymentId !== null ||
                             isSubmittingReview
                           }
-                          className="mt-3 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {checkingInId === booking.id
                             ? "Mencatat kedatangan..."

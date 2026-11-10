@@ -124,14 +124,14 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
   }, []);
 
   return (
-    <section className="mt-6 rounded-xl border border-blue-200 bg-white p-5 shadow-sm">
+    <section className="mt-6 rounded-xl border border-soft bg-white p-5 shadow-sm sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">
+          <h2 className="text-lg font-bold text-primary">
             Jadwal kapster{data ? ` — ${data.kapster.name}` : ""}
           </h2>
 
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm leading-6 text-muted">
             Waktu ditampilkan dalam WIB, termasuk jeda setelah layanan.
           </p>
         </div>
@@ -139,7 +139,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="min-h-11 rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
+          className="min-h-11 rounded-lg border border-border bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/30"
         >
           Tutup
         </button>
@@ -149,7 +149,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
         <div>
           <label
             htmlFor="kapster-schedule-date"
-            className="mb-2 block text-sm font-semibold text-gray-700"
+            className="mb-2 block text-sm font-semibold text-primary"
           >
             Tanggal jadwal
           </label>
@@ -159,7 +159,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
             type="date"
             value={date}
             onChange={(event) => setDate(event.target.value)}
-            className="min-h-11 rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="min-h-11 rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15"
           />
         </div>
 
@@ -167,7 +167,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
           type="button"
           onClick={() => setRefreshKey((current) => current + 1)}
           disabled={isLoading || !date}
-          className="min-h-11 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
         >
           Perbarui jadwal
         </button>
@@ -254,7 +254,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
           )}
 
           {data.schedules.length === 0 ? (
-            <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+            <p className="rounded-lg border border-border bg-background p-4 text-sm leading-6 text-muted">
               Belum ada jadwal tercatat pada tanggal ini. Perhatikan peringatan
               order aktif di atas jika tersedia.
             </p>
@@ -277,10 +277,10 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
                   key={schedule.id}
                   className={`rounded-xl border p-4 ${
                     isReleased
-                      ? "border-gray-200 bg-gray-50"
+                      ? "border-border bg-stone-50"
                       : schedule.isOverdue
                         ? "border-red-200 bg-red-50"
-                        : "border-blue-100 bg-white"
+                        : "border-border bg-white"
                   }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -294,17 +294,17 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
                     </span>
                   </div>
 
-                  <p className="mt-3 text-sm font-semibold text-gray-800">
+                  <p className="mt-3 text-sm font-semibold text-stone-800">
                     {schedule.customer.name}
                   </p>
 
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-muted">
                     {schedule.source === "ONLINE"
                       ? `Booking online #${schedule.bookingId ?? "—"}`
                       : "Order langsung"}
                   </p>
 
-                  <ul className="mt-3 space-y-1 text-sm text-gray-600">
+                  <ul className="mt-3 space-y-1 text-sm leading-6 text-muted">
                     {schedule.items.map((item, index) => (
                       <li key={`${schedule.id}-${index}`}>
                         {item.serviceName} × {item.quantity}
@@ -315,7 +315,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
                   {schedule.isOverdue && !isReleased ? (
                     <div
                       role="status"
-                      className="mt-3 rounded-lg border border-red-200 bg-red-100 p-3"
+                      className="mt-3 rounded-lg bg-soft/20 p-3 text-sm leading-6 text-muted"
                     >
                       <p className="text-sm font-semibold text-red-800">
                         Layanan melewati perkiraan selesai
@@ -350,7 +350,7 @@ export default function KapsterSchedulePanel({ kapsterId, onClose }: Props) {
                   {schedule.orderId !== null && (
                     <Link
                       to={`/order/${schedule.orderId}`}
-                      className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 underline"
+                      className="mt-3 inline-flex min-h-11 items-center justify-center rounded-lg border border-soft bg-soft/30 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/60"
                     >
                       Lihat order #{schedule.orderId}
                     </Link>

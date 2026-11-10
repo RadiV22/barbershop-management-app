@@ -283,8 +283,8 @@ export default function CustomerPage() {
     <div>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Customer</h1>
-          <p className="mt-1 text-gray-600">Daftar customer barbershop.</p>
+          <h1 className="text-2xl font-bold text-primary">Customer</h1>
+          <p className="mt-1 text-muted">Daftar customer barbershop.</p>
         </div>
 
         {!showForm && (
@@ -299,7 +299,7 @@ export default function CustomerPage() {
               setSuccessMessage("");
               setShowForm(true);
             }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
             Tambah customer
           </button>
@@ -330,9 +330,9 @@ export default function CustomerPage() {
       {showForm && (
         <form
           onSubmit={handleSaveCustomer}
-          className="mt-6 rounded-xl bg-white p-6 shadow-sm"
+          className="mt-6 rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6"
         >
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold text-primary">
             {editingCustomerId !== null ? "Edit customer" : "Tambah customer"}
           </h2>
 
@@ -340,7 +340,7 @@ export default function CustomerPage() {
             <div>
               <label
                 htmlFor="customer-name"
-                className="block text-sm font-medium"
+                className="block text-sm font-medium text-primary"
               >
                 Nama customer
               </label>
@@ -350,14 +350,14 @@ export default function CustomerPage() {
                 required
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
             <div>
               <label
                 htmlFor="customer-phone"
-                className="block text-sm font-medium"
+                className="block text-sm font-medium text-primary"
               >
                 Nomor telepon
               </label>
@@ -367,7 +367,7 @@ export default function CustomerPage() {
                 required
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -377,10 +377,10 @@ export default function CustomerPage() {
               </p>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? "Menyimpan..." : "Simpan"}
               </button>
@@ -388,7 +388,7 @@ export default function CustomerPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+                className="min-h-11 rounded-lg border border-border bg-white px-5 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Batal
               </button>
@@ -422,7 +422,7 @@ export default function CustomerPage() {
       {!isLoading && !errorMessage && (
         <section
           aria-label="Daftar customer"
-          className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm"
+          className="mt-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm"
         >
           {customers.length === 0 ? (
             <p className="p-6 text-gray-600">
@@ -430,8 +430,8 @@ export default function CustomerPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+              <table className="w-full min-w-[800px] text-left text-sm">
+                <thead className="border-b border-border bg-soft/30 text-primary">
                   <tr>
                     <th scope="col" className="px-6 py-4">
                       Nama customer
@@ -448,9 +448,12 @@ export default function CustomerPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {customers.map((customer) => (
-                    <tr key={customer.id}>
+                    <tr
+                      key={customer.id}
+                      className="transition-colors hover:bg-background"
+                    >
                       <td className="px-6 py-4 font-medium">{customer.name}</td>
                       <td className="whitespace-nowrap px-6 py-4">
                         {customer.phone || "—"}
@@ -470,11 +473,14 @@ export default function CustomerPage() {
                                 : "Tidak aktif"}
                             </span>
 
-                            <p className="max-w-64 break-all text-xs text-gray-500">
+                            <p
+                              title={customer.membership.memberCode}
+                              className="max-w-64 truncate font-mono text-xs text-muted"
+                            >
                               {customer.membership.memberCode}
                             </p>
 
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted">
                               Diskon: {customer.membership.discountPercent}%
                               {!customer.membership.isActive &&
                                 " (tidak berlaku saat nonaktif)"}
@@ -494,7 +500,7 @@ export default function CustomerPage() {
                             membershipCustomerId !== null
                           }
                           onClick={() => handleToggleMembership(customer)}
-                          className="mt-3 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                          className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-white px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {membershipCustomerId === customer.id
                             ? "Memproses..."
@@ -516,7 +522,7 @@ export default function CustomerPage() {
                               setDeleteError("");
                               handleEditCustomer(customer);
                             }}
-                            className="rounded-lg bg-blue-50 px-3 py-2 font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-soft bg-soft/30 px-3 py-2 font-semibold text-primary transition-colors hover:bg-soft/60 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Edit
                           </button>
@@ -529,7 +535,7 @@ export default function CustomerPage() {
                               deletingCustomerId !== null
                             }
                             onClick={() => handleDeleteCustomer(customer)}
-                            className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {deletingCustomerId === customer.id
                               ? "Menghapus..."

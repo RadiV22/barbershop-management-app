@@ -249,8 +249,8 @@ export default function KapsterPage() {
     <div>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Kapster</h1>
-          <p className="mt-1 text-gray-600">Daftar kapster barbershop.</p>
+          <h1 className="text-2xl font-bold text-primary">Kapster</h1>
+          <p className="mt-1 text-muted">Daftar kapster barbershop.</p>
         </div>
 
         {!showForm && (
@@ -268,7 +268,7 @@ export default function KapsterPage() {
               setSuccessMessage("");
               setShowForm(true);
             }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
             Tambah kapster
           </button>
@@ -293,9 +293,9 @@ export default function KapsterPage() {
       {showForm && (
         <form
           onSubmit={handleSaveKapster}
-          className="mt-6 rounded-xl bg-white p-6 shadow-sm"
+          className="mt-6 rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6"
         >
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold text-primary">
             {editingKapsterId !== null ? "Edit kapster" : "Tambah kapster"}
           </h2>
 
@@ -303,7 +303,7 @@ export default function KapsterPage() {
             <div>
               <label
                 htmlFor="kapster-name"
-                className="block text-sm font-medium"
+                className="block text-sm font-medium text-primary"
               >
                 Nama kapster
               </label>
@@ -314,7 +314,7 @@ export default function KapsterPage() {
                 required
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -324,10 +324,10 @@ export default function KapsterPage() {
               </p>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSaving ? "Menyimpan..." : "Simpan"}
               </button>
@@ -335,7 +335,7 @@ export default function KapsterPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+                className="min-h-11 rounded-lg border border-border bg-white px-5 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Batal
               </button>
@@ -381,7 +381,7 @@ export default function KapsterPage() {
       {!isLoading && !errorMessage && (
         <section
           aria-label="Daftar kapster"
-          className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm"
+          className="mt-6 overflow-hidden rounded-xl border border-border bg-white shadow-sm"
         >
           {kapsters.length === 0 ? (
             <p className="p-6 text-gray-600">
@@ -389,8 +389,8 @@ export default function KapsterPage() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+              <table className="w-full min-w-[950px] text-left text-sm">
+                <thead className="border-b border-border bg-soft/30 text-primary">
                   <tr>
                     <th scope="col" className="px-6 py-4">
                       Nama kapster
@@ -414,9 +414,12 @@ export default function KapsterPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {kapsters.map((kapster) => (
-                    <tr key={kapster.id}>
+                    <tr
+                      key={kapster.id}
+                      className="transition-colors hover:bg-background"
+                    >
                       <td className="px-6 py-4 font-medium">{kapster.name}</td>
 
                       <td className="px-6 py-4">
@@ -443,16 +446,56 @@ export default function KapsterPage() {
                         </button>
                       </td>
 
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {new Date(kapster.createdAt).toLocaleString("id-ID", {
-                          timeZone: "Asia/Jakarta",
-                        })}
+                      <td className="whitespace-nowrap px-4 py-4">
+                        <p className="text-stone-800">
+                          {new Date(kapster.createdAt).toLocaleDateString(
+                            "id-ID",
+                            {
+                              timeZone: "Asia/Jakarta",
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </p>
+
+                        <p className="mt-1 text-xs text-muted">
+                          {new Date(kapster.createdAt).toLocaleTimeString(
+                            "id-ID",
+                            {
+                              timeZone: "Asia/Jakarta",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}{" "}
+                          WIB
+                        </p>
                       </td>
 
-                      <td className="whitespace-nowrap px-6 py-4">
-                        {new Date(kapster.updatedAt).toLocaleString("id-ID", {
-                          timeZone: "Asia/Jakarta",
-                        })}
+                      <td className="whitespace-nowrap px-4 py-4">
+                        <p className="text-stone-800">
+                          {new Date(kapster.updatedAt).toLocaleDateString(
+                            "id-ID",
+                            {
+                              timeZone: "Asia/Jakarta",
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )}
+                        </p>
+
+                        <p className="mt-1 text-xs text-muted">
+                          {new Date(kapster.updatedAt).toLocaleTimeString(
+                            "id-ID",
+                            {
+                              timeZone: "Asia/Jakarta",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}{" "}
+                          WIB
+                        </p>
                       </td>
 
                       <td className="px-6 py-4">
@@ -471,7 +514,7 @@ export default function KapsterPage() {
                             aria-pressed={
                               selectedScheduleKapsterId === kapster.id
                             }
-                            className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-soft bg-soft/30 px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/60 aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-white disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Lihat jadwal
                           </button>
@@ -486,7 +529,7 @@ export default function KapsterPage() {
                               setDeleteError("");
                               handleEditKapster(kapster);
                             }}
-                            className="rounded-lg bg-blue-50 px-3 py-2 font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-white px-3 py-2 font-semibold text-primary transition-colors hover:bg-soft/30 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Edit
                           </button>
@@ -500,7 +543,7 @@ export default function KapsterPage() {
                               updatingStatusId !== null
                             }
                             onClick={() => handleDeleteKapster(kapster)}
-                            className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-red-50 px-3 py-2 font-medium text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {deletingKapsterId === kapster.id
                               ? "Menghapus..."

@@ -342,7 +342,7 @@ export default function OrderDetailPage() {
     <div>
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-primary">
             Detail Order {order ? `#${order.id}` : ""}
           </h1>
           <p className="mt-1 text-gray-600">
@@ -352,7 +352,7 @@ export default function OrderDetailPage() {
 
         <Link
           to="/order"
-          className="rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"
+          className="inline-flex min-h-11 items-center rounded-lg border border-border bg-white px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/30"
         >
           Kembali ke daftar
         </Link>
@@ -364,7 +364,7 @@ export default function OrderDetailPage() {
             type="button"
             disabled={isDownloading || isPaying || isUpdatingStatus}
             onClick={handleDownloadInvoice}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-11 rounded-lg border border-soft bg-soft/30 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-soft/60 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDownloading ? "Mengunduh..." : "Unduh Nota PDF"}
           </button>
@@ -401,7 +401,7 @@ export default function OrderDetailPage() {
 
       {!isLoading && !errorMessage && order && (
         <div className="mt-6 space-y-6">
-          <section className="rounded-xl bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">Informasi order</h2>
 
             {statusMessage && (
@@ -440,7 +440,7 @@ export default function OrderDetailPage() {
                   Boolean(statusError)
                 }
                 onClick={handleUpdateStatus}
-                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isUpdatingStatus
                   ? "Memperbarui..."
@@ -463,13 +463,33 @@ export default function OrderDetailPage() {
 
               <div>
                 <dt className="text-sm text-gray-500">Status layanan</dt>
-                <dd>{serviceStatusLabels[order.serviceStatus]}</dd>
+                <dd className="mt-2">
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      order.serviceStatus === "WAITING"
+                        ? "bg-amber-100 text-amber-800"
+                        : order.serviceStatus === "IN_SERVICE"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {serviceStatusLabels[order.serviceStatus]}
+                  </span>
+                </dd>
               </div>
 
               <div>
                 <dt className="text-sm text-gray-500">Pembayaran</dt>
-                <dd>
-                  {order.paymentStatus === "PAID" ? "Lunas" : "Belum bayar"}
+                <dd className="mt-2">
+                  <span
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                      order.paymentStatus === "PAID"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {order.paymentStatus === "PAID" ? "Lunas" : "Belum bayar"}
+                  </span>
                 </dd>
               </div>
 
@@ -502,11 +522,13 @@ export default function OrderDetailPage() {
           </section>
 
           <section className="overflow-hidden rounded-xl bg-white shadow-sm">
-            <h2 className="px-6 py-4 text-lg font-semibold">Rincian layanan</h2>
+            <h2 className="px-6 py-4 text-lg font-semibold text-primary">
+              Rincian layanan
+            </h2>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 text-gray-600">
+              <table className="w-full min-w-[600px] text-left text-sm">
+                <thead className="border-y border-border bg-soft/30 text-primary">
                   <tr>
                     <th scope="col" className="px-6 py-4">
                       Layanan
@@ -523,9 +545,9 @@ export default function OrderDetailPage() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-border">
                   {order.items.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={item.id} className="hover:bg-background">
                       <td className="px-6 py-4">{item.serviceName}</td>
                       <td className="whitespace-nowrap px-6 py-4">
                         {formatRupiah(item.unitPrice)}
@@ -540,20 +562,39 @@ export default function OrderDetailPage() {
               </table>
             </div>
 
-            <div className="space-y-2 border-t border-gray-100 p-6 text-right">
-              <p>Subtotal: {formatRupiah(order.subtotal)}</p>
-              <p>
-                Diskon ({order.discountPercent}%):{" "}
-                {formatRupiah(order.discount)}
-              </p>
-              <p className="text-xl font-bold">
-                Total: {formatRupiah(order.total)}
-              </p>
+            <div className="border-t border-border bg-background p-5 sm:p-6">
+              <dl className="ml-auto max-w-sm space-y-3">
+                <div className="flex items-start justify-between gap-4 text-sm">
+                  <dt className="text-muted">Subtotal</dt>
+
+                  <dd className="shrink-0 font-medium text-stone-800">
+                    {formatRupiah(order.subtotal)}
+                  </dd>
+                </div>
+
+                <div className="flex items-start justify-between gap-4 text-sm">
+                  <dt className="text-muted">
+                    Diskon ({order.discountPercent}%)
+                  </dt>
+
+                  <dd className="shrink-0 font-medium text-green-700">
+                    − {formatRupiah(order.discount)}
+                  </dd>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                  <dt className="font-semibold text-primary">Total tagihan</dt>
+
+                  <dd className="text-2xl font-bold text-primary">
+                    {formatRupiah(order.total)}
+                  </dd>
+                </div>
+              </dl>
             </div>
           </section>
 
-          <section className="rounded-xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">Pembayaran</h2>
+          <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
+            <h2 className="text-lg font-semibold text-primary">Pembayaran</h2>
 
             {paymentMessage && (
               <p
@@ -617,7 +658,7 @@ export default function OrderDetailPage() {
               </dl>
             ) : order.paymentStatus === "UNPAID" ? (
               <form
-                className="mt-4"
+                className="mt-5 max-w-xl"
                 onSubmit={(event) => {
                   event.preventDefault();
                   void handlePayment();
@@ -632,9 +673,13 @@ export default function OrderDetailPage() {
                   }
                   className="space-y-4"
                 >
-                  <p className="font-semibold">
-                    Total tagihan: {formatRupiah(order.total)}
-                  </p>
+                  <div className="rounded-lg border border-soft bg-soft/25 p-4">
+                    <p className="text-sm text-muted">Total tagihan</p>
+
+                    <p className="mt-1 text-2xl font-bold text-primary">
+                      {formatRupiah(order.total)}
+                    </p>
+                  </div>
 
                   <div>
                     <label
@@ -652,7 +697,7 @@ export default function OrderDetailPage() {
                         setAmountReceived("");
                         setPaymentError("");
                       }}
-                      className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                      className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="CASH">Tunai</option>
                       <option value="TRANSFER">Transfer</option>
@@ -681,7 +726,7 @@ export default function OrderDetailPage() {
                         onChange={(event) =>
                           setAmountReceived(event.target.value)
                         }
-                        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                        className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-stone-800 outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/15 disabled:cursor-not-allowed disabled:opacity-50"
                       />
 
                       {amountReceived !== "" &&
@@ -702,7 +747,7 @@ export default function OrderDetailPage() {
 
                   <button
                     type="submit"
-                    className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
+                    className="min-h-11 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isPaying ? "Mencatat pembayaran..." : "Catat pembayaran"}
                   </button>
@@ -715,7 +760,7 @@ export default function OrderDetailPage() {
             )}
           </section>
 
-          <section className="rounded-xl bg-white p-6 shadow-sm">
+          <section className="rounded-xl border border-border bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-semibold">Riwayat status layanan</h2>
 
             {order.statusHistories.length === 0 ? (
@@ -727,9 +772,9 @@ export default function OrderDetailPage() {
                 {order.statusHistories.map((history) => (
                   <li
                     key={history.id}
-                    className="border-l-2 border-blue-200 pl-4"
+                    className="border-l-2 border-soft py-1 pl-4"
                   >
-                    <p className="font-medium">
+                    <p className="font-semibold text-primary">
                       {history.fromStatus
                         ? serviceStatusLabels[history.fromStatus]
                         : "Order dibuat"}
